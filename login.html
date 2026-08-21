@@ -31,7 +31,6 @@
         .toggle-password:hover {
             color: var(--primary);
         }
-        /* Estilo para la versión en el footer de la card */
         .login-footer-version {
             margin-top: 1.5rem;
             text-align: center;
@@ -66,7 +65,7 @@
             <div id="mensajeError" class="error-msg"></div>
         </form>
         <div class="login-footer-version">
-            Versión V1.2 • MANU JOYEROS
+            Versión V1.1 • MANU JOYEROS
         </div>
     </div>
 
@@ -98,13 +97,19 @@
             btn.textContent = "Verificando...";
             errorDiv.textContent = "";
 
-            const res = await API.llamar("login", { usuario, password }, "POST");
+            try {
+                const res = await API.llamar("login", { usuario, password }, "POST");
 
-            if (res.status === "success") {
-                localStorage.setItem("usuario_manu", JSON.stringify(res.usuario));
-                window.location.href = "index.html"; 
-            } else {
-                errorDiv.textContent = res.message;
+                if (res && res.status === "success") {
+                    localStorage.setItem("usuario_manu", JSON.stringify(res.usuario));
+                    window.location.href = "index.html"; 
+                } else {
+                    errorDiv.textContent = res ? res.message : "Error de respuesta del servidor.";
+                    btn.disabled = false;
+                    btn.textContent = "Ingresar al Sistema";
+                }
+            } catch (err) {
+                errorDiv.textContent = "Error de conexión con la API.";
                 btn.disabled = false;
                 btn.textContent = "Ingresar al Sistema";
             }
