@@ -10,6 +10,30 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        /* Capa oscura de fondo cuando el menú está abierto en móvil */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .sidebar-overlay.active {
+            display: block;
         }
         .sidebar-header {
             background-color: #0f172a;
@@ -23,7 +47,7 @@
             border-radius: 8px;
             display: inline-block;
             width: 100%;
-            max-width: 200px;
+            max-width: 180px;
             margin: 0 auto;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -45,12 +69,49 @@
             border-top: 1px solid rgba(255,255,255,0.1);
             background-color: #0b0f19;
         }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            overflow: hidden;
+        }
+        .top-bar {
+            background: #ffffff;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #0f172a;
+        }
+        .content-body {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
         .table-container { overflow-x: auto; margin-top: 1rem; }
-        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-        .data-table th, .data-table td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+        .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
-        .data-table tr:hover { background-color: #f1f5f9; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0);
+                position: relative;
+            }
+            .sidebar-overlay { display: none !important; }
+            .main-content { margin-left: 0; }
+            .menu-toggle { display: none; }
+            .content-body { padding: 2rem; }
+            .form-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        }
         select, input[type="text"], input[type="number"] {
             width: 100%;
             padding: 0.75rem;
@@ -65,13 +126,16 @@
     </style>
 </head>
 <body class="app-body">
+    <!-- Capa oscura para cerrar menú al tocar afuera en móviles -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <!-- Menú Lateral / Navegación -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo-container">
                 <img src="manu_joyeros.jpg" alt="MANU JOYEROS" class="sidebar-logo-img">
             </div>
-            <div style="margin-top: 10px;">
+            <div style="margin-top: 8px;">
                 <span id="userRoleBadge" class="badge">Rol</span>
             </div>
         </div>
@@ -95,8 +159,8 @@
     <main class="main-content">
         <header class="top-bar">
             <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            <h1 id="viewTitle">Dashboard General</h1>
-            <div class="user-info">
+            <h1 id="viewTitle" style="font-size: 1.25rem;">Dashboard General</h1>
+            <div class="user-info" style="font-size: 0.9rem;">
                 <span id="userNameLabel">Usuario</span>
             </div>
         </header>
@@ -108,7 +172,7 @@
                     <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
                     <p>Sistema profesional de inventario y control de alta joyería — <em>¡Joyas que trascienden el tiempo!</em></p>
                 </div>
-                <div class="welcome-date" id="currentDateLabel">
+                <div class="welcome-date" id="currentDateLabel" style="margin-top: 10px;">
                     Viernes, 21 de Agosto de 2026
                 </div>
             </div>
@@ -180,7 +244,10 @@
         }
 
         function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("active");
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("sidebarOverlay");
+            sidebar.classList.toggle("active");
+            overlay.classList.toggle("active");
         }
 
         function cambiarVista(vista, event) {
@@ -190,6 +257,11 @@
                 document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
             }
             
+            // Cerrar menú automáticamente en móviles al seleccionar una opción
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+
             const content = document.getElementById("contentBody");
             if(vista === 'dashboard') {
                 location.reload(); 
@@ -208,9 +280,9 @@
         async function renderizarModuloProductos(container) {
             container.innerHTML = `
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
                         <h3>Catálogo de Productos y Joyas</h3>
-                        <button class="btn-primary" style="width: auto; padding: 0.75rem 1.25rem;" onclick="abrirFormularioNuevoProducto()">+ Nuevo Producto</button>
+                        <button class="btn-primary" style="width: 100%; padding: 0.75rem;" onclick="abrirFormularioNuevoProducto()">+ Nuevo Producto</button>
                     </div>
                     <div id="vistaProductosInterna">Cargando catálogo...</div>
                 </div>
@@ -234,12 +306,10 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>SKU (Auto)</th>
-                                    <th>Código de Barras</th>
-                                    <th>Nombre del Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Material</th>
-                                    <th>Ubicación</th>
+                                    <th>SKU</th>
+                                    <th>Producto</th>
+                                    <th>Cat.</th>
+                                    <th>Ubic.</th>
                                     <th>Estado</th>
                                 </tr>
                             </thead>
@@ -249,12 +319,10 @@
                     html += `
                         <tr>
                             <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
-                            <td>${p.Codigo_Barra || '-'}</td>
                             <td>${p.Nombre}</td>
-                            <td><span class="badge" style="background-color: #0f172a;">${p.Categoria || 'GENERAL'}</span></td>
-                            <td>${p.Material || '-'}</td>
+                            <td>${p.Categoria || '-'}</td>
                             <td>${p.Ubicacion || '-'}</td>
-                            <td><span class="badge" style="background-color: #10b981;">${p.Estado}</span></td>
+                            <td><span class="badge" style="background-color: #10b981; font-size: 0.7rem;">${p.Estado}</span></td>
                         </tr>
                     `;
                 });
@@ -268,14 +336,14 @@
         function abrirFormularioNuevoProducto() {
             const container = document.getElementById("vistaProductosInterna");
             container.innerHTML = `
-                <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
-                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya / Producto (SKU y Código de Barras Automáticos)</h4>
+                <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya</h4>
                     <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Categoría *</label>
                                 <select id="prodCategoria" required>
-                                    <option value="">Seleccione categoría...</option>
+                                    <option value="">Seleccione...</option>
                                     <option value="ANILLOS">ANILLOS</option>
                                     <option value="CADENAS">CADENAS</option>
                                     <option value="ARETES">ARETES</option>
@@ -287,42 +355,42 @@
                             </div>
                             <div class="form-group">
                                 <label>Nombre / Descripción *</label>
-                                <input type="text" id="prodNombre" required placeholder="Ej: Anillo con Esmeralda en Lágrima">
+                                <input type="text" id="prodNombre" required placeholder="Ej: Anillo Oro Esmeralda">
                             </div>
                             <div class="form-group">
-                                <label>Material / Oro (Seleccionar o Crear)</label>
+                                <label>Material / Oro</label>
                                 <select id="prodMaterialSelect" onchange="verificarNuevoMaterial(this)">
                                     <option value="ORO AMARILLO 18K">ORO AMARILLO 18K</option>
                                     <option value="ORO BLANCO 18K">ORO BLANCO 18K</option>
                                     <option value="TRES OROS">TRES OROS</option>
                                     <option value="PLATA 925">PLATA 925</option>
-                                    <option value="OTRO">+ Agregar Material Nuevo...</option>
+                                    <option value="OTRO">+ Agregar Nuevo...</option>
                                 </select>
                                 <input type="text" id="prodMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo material">
                             </div>
                             <div class="form-group">
-                                <label>Ubicación Física (Vitrina / Estante)</label>
+                                <label>Ubicación Física</label>
                                 <select id="prodUbicacionSelect" onchange="verificarNuevaUbicacion(this)">
                                     <option value="VITRINA 1">VITRINA 1</option>
                                     <option value="VITRINA 2">VITRINA 2</option>
                                     <option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option>
                                     <option value="CAJA FUERTE">CAJA FUERTE</option>
-                                    <option value="OTRO">+ Agregar Ubicación Nueva...</option>
+                                    <option value="OTRO">+ Agregar Nueva...</option>
                                 </select>
                                 <input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
                             </div>
                             <div class="form-group">
-                                <label>Peso (Gramos) [Opcional]</label>
+                                <label>Peso (Gramos)</label>
                                 <input type="text" id="prodPeso" placeholder="Ej: 5.2G">
                             </div>
                             <div class="form-group">
-                                <label>Código de Barras (Opcional - Se genera solo)</label>
-                                <input type="text" id="prodBarra" placeholder="Dejar en blanco para autogenerar">
+                                <label>Código de Barras</label>
+                                <input type="text" id="prodBarra" placeholder="Opcional (Auto)">
                             </div>
                         </div>
                         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">Guardar Producto</button>
-                            <button type="button" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
+                            <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem;">Guardar</button>
+                            <button type="button" class="btn-primary" style="flex: 1; padding: 0.75rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
                         </div>
                     </form>
                 </div>
@@ -382,7 +450,7 @@
                 alert(res.message);
                 cargarListaProductos();
             } else if (res && res.status === "existe") {
-                const confirmarForzar = confirm(res.message + "\n\n¿Desea registrar de todos modos este producto como un nuevo ítem independiente?");
+                const confirmarForzar = confirm(res.message + "\n\n¿Desea registrar de todos modos este producto como un nuevo ítem?");
                 if (confirmarForzar) {
                     guardarNuevoProducto(event, true);
                 }
