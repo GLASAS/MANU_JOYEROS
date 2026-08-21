@@ -6,7 +6,6 @@
     <title>Login - MANU JOYEROS</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        /* Estilo contenedor de contraseña con botón de ojo */
         .password-container {
             position: relative;
             display: flex;
@@ -31,6 +30,15 @@
         }
         .toggle-password:hover {
             color: var(--primary);
+        }
+        /* Estilo para la versión en el footer de la card */
+        .login-footer-version {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 0.75rem;
         }
     </style>
 </head>
@@ -57,6 +65,9 @@
             <button type="submit" class="btn-primary" id="btnIngresar">Ingresar al Sistema</button>
             <div id="mensajeError" class="error-msg"></div>
         </form>
+        <div class="login-footer-version">
+            Versión V1.0 • MANU JOYEROS
+        </div>
     </div>
 
     <script src="js/config.js"></script>
@@ -67,7 +78,7 @@
             const btnToggle = document.getElementById('btnTogglePass');
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
-                btnToggle.textContent = '🔒'; // Cambia el icono opcionalmente al mostrar
+                btnToggle.textContent = '🔒';
                 btnToggle.title = 'Ocultar contraseña';
             } else {
                 passwordInput.type = 'password';
