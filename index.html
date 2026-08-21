@@ -100,6 +100,12 @@
         .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         
+        /* Estado transparente automático al presionar cualquier botón (Anti-Doble Clic) */
+        button.is-loading, button:active {
+            opacity: 0.5 !important;
+            pointer-events: none !important;
+        }
+
         /* Botón Moderno "+ Nuevo Producto" */
         .btn-nuevo-producto {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -337,6 +343,17 @@
     <script src="js/api.js"></script>
     <script>
         let usuarioActual = null;
+
+        // Protección global anti-doble clic para cualquier botón del sistema
+        document.addEventListener("click", function(e) {
+            const btn = e.target.closest("button");
+            if (btn && !btn.classList.contains("is-loading")) {
+                btn.classList.add("is-loading");
+                setTimeout(() => {
+                    btn.classList.remove("is-loading");
+                }, 1500); // Reactiva el botón automáticamente tras 1.5 segundos
+            }
+        });
 
         document.addEventListener("DOMContentLoaded", () => {
             const usuarioGuardado = localStorage.getItem("usuario_manu");
