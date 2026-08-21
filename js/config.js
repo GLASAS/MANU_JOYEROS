@@ -4,5 +4,5 @@
 const CONFIG = {
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzqxwOAzPJoer6EdHfcoZuFbvGcRre-BiATD1umIaf3l_37rDRinboqxkjSqOIuPnU_/exec",
   NOMBRE_EMPRESA: "MANU JOYEROS",
-  VERSION: "V1.1630"
+  VERSION: "V1.1650"
 };
