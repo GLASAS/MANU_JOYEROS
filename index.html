@@ -100,7 +100,6 @@
         .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         
-        /* Botones de acción bonitos */
         .btn-action {
             padding: 6px 10px;
             border: none;
@@ -129,7 +128,7 @@
             .content-body { padding: 2rem; }
             .form-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         }
-        select, input[type="text"], input[type="number"] {
+        select, input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #cbd5e1;
@@ -165,6 +164,7 @@
             <a href="#" class="nav-link" onclick="cambiarVista('kardex', event)">📑 Kardex</a>
             <a href="#" class="nav-link" onclick="cambiarVista('proveedores', event)">🏢 Proveedores</a>
             <a href="#" class="nav-link" onclick="cambiarVista('usuarios', event)">👤 Usuarios</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('cambiar_password', event)">🔑 Cambiar Contraseña</a>
             <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
         </nav>
         <div class="sidebar-footer-version" id="versionSidebarLabel">
@@ -285,6 +285,8 @@
                 location.reload(); 
             } else if(vista === 'productos') {
                 renderizarModuloProductos(content);
+            } else if(vista === 'cambiar_password') {
+                renderizarModuloCambiarPassword(content);
             } else {
                 content.innerHTML = `
                     <div class="card">
@@ -292,6 +294,56 @@
                         <p>Este módulo se encuentra configurado en la arquitectura del sistema y listo para desplegarse.</p>
                     </div>
                 `;
+            }
+        }
+
+        function renderizarModuloCambiarPassword(container) {
+            container.innerHTML = `
+                <div class="card" style="max-width: 500px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #0f172a;">🔑 Cambiar Contraseña</h3>
+                    <form id="formCambiarPass" onsubmit="ejecutarCambioPassword(event)">
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Contraseña Actual *</label>
+                            <input type="password" id="passActual" required placeholder="••••••••">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label>Nueva Contraseña *</label>
+                            <input type="password" id="passNueva" required placeholder="••••••••">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label>Confirmar Nueva Contraseña *</label>
+                            <input type="password" id="passConfirmar" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem;">Actualizar Contraseña</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function ejecutarCambioPassword(event) {
+            event.preventDefault();
+            const passwordActual = document.getElementById("passActual").value.trim();
+            const passwordNueva = document.getElementById("passNueva").value.trim();
+            const passwordConfirmar = document.getElementById("passConfirmar").value.trim();
+
+            if (passwordNueva !== passwordConfirmar) {
+                alert("Las nuevas contraseñas no coinciden.");
+                return;
+            }
+
+            const data = {
+                action: "cambiarPassword",
+                usuario: usuarioActual.usuario,
+                password_actual: passwordActual,
+                password_nueva: passwordNueva
+            };
+
+            const res = await API.llamar("cambiarPassword", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                document.getElementById("formCambiarPass").reset();
+            } else {
+                alert("Error: " + (res ? res.message : "No se pudo actualizar la contraseña."));
             }
         }
 
@@ -408,7 +460,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Material / Oro</label>
-                                <select id="prodMaterialSelect" onchange="verificarNuevoMaterial(this)">
+                                <select id="prodMaterialSelect" onchange="verificarCampoDinamico(this, 'prodMaterialNuevo')">
                                     <option value="ORO AMARILLO 18K">ORO AMARILLO 18K</option>
                                     <option value="ORO BLANCO 18K">ORO BLANCO 18K</option>
                                     <option value="TRES OROS">TRES OROS</option>
@@ -418,8 +470,33 @@
                                 <input type="text" id="prodMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo material">
                             </div>
                             <div class="form-group">
+                                <label>Tipo de Piedra</label>
+                                <select id="prodPiedraSelect" onchange="verificarCampoDinamico(this, 'prodPiedraNueva')">
+                                    <option value="ESMERALDA">ESMERALDA</option>
+                                    <option value="DIAMANTE">DIAMANTE</option>
+                                    <option value="RUBI">RUBÍ</option>
+                                    <option value="ZAFIRO">ZAFIRO</option>
+                                    <option value="CIRCON">CIRCÓN</option>
+                                    <option value="SIN PIEDRA">SIN PIEDRA</option>
+                                    <option value="OTRO">+ Agregar Nueva...</option>
+                                </select>
+                                <input type="text" id="prodPiedraNueva" style="display:none; margin-top:5px;" placeholder="Digite el nuevo tipo de piedra">
+                            </div>
+                            <div class="form-group">
+                                <label>Color</label>
+                                <select id="prodColorSelect" onchange="verificarCampoDinamico(this, 'prodColorNuevo')">
+                                    <option value="AMARILLO">AMARILLO</option>
+                                    <option value="BLANCO">BLANCO</option>
+                                    <option value="ROSADO">ROSADO</option>
+                                    <option value="VERDE">VERDE</option>
+                                    <option value="AZUL">AZUL</option>
+                                    <option value="OTRO">+ Agregar Nuevo...</option>
+                                </select>
+                                <input type="text" id="prodColorNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo color">
+                            </div>
+                            <div class="form-group">
                                 <label>Ubicación Física</label>
-                                <select id="prodUbicacionSelect" onchange="verificarNuevaUbicacion(this)">
+                                <select id="prodUbicacionSelect" onchange="verificarCampoDinamico(this, 'prodUbicacionNueva')">
                                     <option value="VITRINA 1">VITRINA 1</option>
                                     <option value="VITRINA 2">VITRINA 2</option>
                                     <option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option>
@@ -527,20 +604,8 @@
             }
         }
 
-        function verificarNuevoMaterial(select) {
-            const inputNuevo = document.getElementById("prodMaterialNuevo");
-            if (select.value === "OTRO") {
-                inputNuevo.style.display = "block";
-                inputNuevo.required = true;
-                inputNuevo.focus();
-            } else {
-                inputNuevo.style.display = "none";
-                inputNuevo.required = false;
-            }
-        }
-
-        function verificarNuevaUbicacion(select) {
-            const inputNuevo = document.getElementById("prodUbicacionNueva");
+        function verificarCampoDinamico(select, inputId) {
+            const inputNuevo = document.getElementById(inputId);
             if (select.value === "OTRO") {
                 inputNuevo.style.display = "block";
                 inputNuevo.required = true;
@@ -559,14 +624,27 @@
                 materialFinal = document.getElementById("prodMaterialNuevo").value.trim().toUpperCase();
             }
 
+            let piedraFinal = document.getElementById("prodPiedraSelect").value;
+            if (piedraFinal === "OTRO") {
+                piedraFinal = document.getElementById("prodPiedraNueva").value.trim().toUpperCase();
+            }
+
+            let colorFinal = document.getElementById("prodColorSelect").value;
+            if (colorFinal === "OTRO") {
+                colorFinal = document.getElementById("prodColorNuevo").value.trim().toUpperCase();
+            }
+
             let ubicacionFinal = document.getElementById("prodUbicacionSelect").value;
             if (ubicacionFinal === "OTRO") {
                 ubicacionFinal = document.getElementById("prodUbicacionNueva").value.trim().toUpperCase();
             }
 
+            const nombreBase = document.getElementById("prodNombre").value.trim();
+            const nombreCompleto = `${nombreBase} [Piedra: ${piedraFinal}, Color: ${colorFinal}]`;
+
             const data = {
                 action: "crearProducto",
-                nombre: document.getElementById("prodNombre").value.trim(),
+                nombre: nombreCompleto,
                 categoria: document.getElementById("prodCategoria").value,
                 material: materialFinal,
                 ubicacion: ubicacionFinal,
