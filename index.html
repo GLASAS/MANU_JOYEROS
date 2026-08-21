@@ -1,8 +1,28 @@
 /**
- * MANU JOYEROS - Configuración Global
+ * MANU JOYEROS - Capa de Comunicación API
  */
-const CONFIG = {
-  // Reemplaza esta URL con la URL de tu implementación de Google Apps Script (Web App)
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyYQ_djgJquooysR9DDwa7p4MAiHcCR0IokHqv9XxtwnDMkxbi8kX7A1R58H8tTOdRy/exec",
-  NOMBRE_EMPRESA: "MANU JOYEROS"
+const API = {
+  async llamar(action, data = {}, method = "POST") {
+    try {
+      let url = CONFIG.APPS_SCRIPT_URL;
+      let opciones = {
+        method: method,
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      };
+
+      if (method === "GET") {
+        url += `?action=${action}`;
+      } else {
+        opciones.body = JSON.stringify({ action: action, ...data });
+      }
+
+      const respuesta = await fetch(url, opciones);
+      const resultado = await respuesta.json();
+      return resultado;
+    } catch (error) {
+      console.error("Error en comunicación con la API:", error);
+      return { status: "error", message: "Error de conexión con el servidor." };
+    }
+  }
 };
