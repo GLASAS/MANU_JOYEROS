@@ -32,15 +32,16 @@
         }
         .login-header { margin-bottom: 1.5rem; }
         .brand-logo-wrapper {
-            background-color: #f7f5ef;
-            padding: 12px;
-            border-radius: 12px;
+            background-color: #ffffff;
+            padding: 6px;
+            border-radius: 8px;
             display: inline-block;
-            margin-bottom: 0.5rem;
-            border: 1px solid #e8e4db;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .brand-logo-img {
-            max-width: 220px;
             width: 100%;
             height: auto;
             display: block;
@@ -109,14 +110,18 @@
             <button type="submit" class="btn-primary" id="btnIngresar">Ingresar al Sistema</button>
             <div id="mensajeError" class="error-msg"></div>
         </form>
-        <div class="login-footer-version">
-            Versión V1.1508 • MANU JOYEROS
+        <div class="login-footer-version" id="versionLoginLabel">
+            MANU JOYEROS
         </div>
     </div>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("versionLoginLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
+        });
+
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
             const btnToggle = document.getElementById('btnTogglePass');
