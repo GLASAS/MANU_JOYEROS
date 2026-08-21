@@ -111,16 +111,18 @@
             <div id="mensajeError" class="error-msg"></div>
         </form>
         <div class="login-footer-version" id="versionLoginLabel">
-            MANU JOYEROS
+            Versión V1.1512 • MANU JOYEROS
         </div>
     </div>
 
+    <!-- Cargar configuración primero -->
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
+        // Cargar versión de manera segura verificando el objeto CONFIG
+        if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
             document.getElementById("versionLoginLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
-        });
+        }
 
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('password');
