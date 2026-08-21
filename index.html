@@ -11,6 +11,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h2>💎 MANU JOYEROS</h2>
+            <p style="font-size: 0.7rem; color: #cbd5e1; font-style: italic; margin-bottom: 0.5rem;">¡Joyas que trascienden el tiempo!</p>
             <span id="userRoleBadge" class="badge">Rol</span>
         </div>
         <nav class="sidebar-nav">
@@ -41,7 +42,7 @@
             <div class="welcome-banner">
                 <div class="welcome-text">
                     <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
-                    <p>Sistema profesional de inventario y control para <strong>MANU JOYEROS</strong>.</p>
+                    <p>Sistema profesional de inventario y control de alta joyería — <em>¡Joyas que trascienden el tiempo!</em></p>
                 </div>
                 <div class="welcome-date" id="currentDateLabel">
                     Viernes, 21 de Agosto de 2026
@@ -101,7 +102,6 @@
             document.getElementById("userNameBanner").textContent = user.nombre;
             document.getElementById("userRoleBadge").textContent = user.rol;
 
-            // Mostrar fecha actual formateada en español
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById("currentDateLabel").textContent = new Date().toLocaleDateString('es-CO', options);
         });
@@ -144,11 +144,11 @@
         }
 
         function abrirModalNuevoProducto() {
-            alert("Módulo detallado de creación de joyas (Material, Peso, Piedra, Costo y Precio) preparado para la siguiente fase.");
+            alert("Módulo detallado de creación de joyas preparado para la siguiente fase.");
         }
 
         function abrirEscaner() {
-            alert("Módulo de escáner de códigos de barras (Cámara / Lector físico) activo.");
+            alert("Módulo de escáner de códigos de barras activo.");
         }
     </script>
 </body>
