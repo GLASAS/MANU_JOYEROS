@@ -21,7 +21,6 @@
         .sidebar.active {
             transform: translateX(0);
         }
-        /* Capa oscura de fondo cuando el menú está abierto en móvil */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -219,16 +218,18 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        let usuarioActual = null;
+
         document.addEventListener("DOMContentLoaded", () => {
             const usuarioGuardado = localStorage.getItem("usuario_manu");
             if (!usuarioGuardado) {
                 window.location.href = "login.html";
                 return;
             }
-            const user = JSON.parse(usuarioGuardado);
-            document.getElementById("userNameLabel").textContent = user.nombre;
-            document.getElementById("userNameBanner").textContent = user.nombre;
-            document.getElementById("userRoleBadge").textContent = user.rol;
+            usuarioActual = JSON.parse(usuarioGuardado);
+            document.getElementById("userNameLabel").textContent = usuarioActual.nombre;
+            document.getElementById("userNameBanner").textContent = usuarioActual.nombre;
+            document.getElementById("userRoleBadge").textContent = usuarioActual.rol;
 
             if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
                 document.getElementById("versionSidebarLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
@@ -257,7 +258,6 @@
                 document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
             }
             
-            // Cerrar menú automáticamente en móviles al seleccionar una opción
             if (window.innerWidth < 768) {
                 toggleSidebar();
             }
@@ -278,11 +278,21 @@
         }
 
         async function renderizarModuloProductos(container) {
+            // Validar si es Administrador para mostrar el botón de nuevo producto
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+            
+            let botonNuevoHtml = '';
+            if (esAdmin) {
+                botonNuevoHtml = `<button class="btn-primary" style="width: 100%; padding: 0.75rem;" onclick="abrirFormularioNuevoProducto()">+ Nuevo Producto</button>`;
+            } else {
+                botonNuevoHtml = `<div style="background: #f1f5f9; padding: 0.75rem; border-radius: 8px; text-align: center; color: #64748b; font-size: 0.85rem;">ℹ️ Modo consulta: Solo el Administrador puede registrar nuevos ingresos.</div>`;
+            }
+
             container.innerHTML = `
                 <div class="card">
                     <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
                         <h3>Catálogo de Productos y Joyas</h3>
-                        <button class="btn-primary" style="width: 100%; padding: 0.75rem;" onclick="abrirFormularioNuevoProducto()">+ Nuevo Producto</button>
+                        ${botonNuevoHtml}
                     </div>
                     <div id="vistaProductosInterna">Cargando catálogo...</div>
                 </div>
@@ -334,6 +344,13 @@
         }
 
         function abrirFormularioNuevoProducto() {
+            // Doble validación por seguridad
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+            if (!esAdmin) {
+                alert("Acceso denegado: Solo el Administrador puede registrar ingresos.");
+                return;
+            }
+
             const container = document.getElementById("vistaProductosInterna");
             container.innerHTML = `
                 <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
