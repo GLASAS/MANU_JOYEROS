@@ -160,6 +160,62 @@
             background-color: #fef2f2;
         }
 
+        /* Botones modernos de Formularios (Guardar / Actualizar / Cancelar) */
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 1.5rem;
+        }
+        .btn-form-save {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-form-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(15, 23, 42, 0.3);
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+        .btn-form-update {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(217, 119, 6, 0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-form-update:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(217, 119, 6, 0.3);
+        }
+        .btn-form-cancel {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-form-cancel:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
         @media (min-width: 768px) {
             .sidebar {
@@ -358,7 +414,7 @@
                             <label>Confirmar Nueva Contraseña *</label>
                             <input type="password" id="passConfirmar" required placeholder="••••••••">
                         </div>
-                        <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem;">Actualizar Contraseña</button>
+                        <button type="submit" class="btn-form-save" style="width: 100%;">Actualizar Contraseña</button>
                     </form>
                 </div>
             `;
@@ -556,9 +612,9 @@
                                 <input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
                             </div>
                         </div>
-                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                            <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem;">Guardar</button>
-                            <button type="button" class="btn-primary" style="flex: 1; padding: 0.75rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="cargarListaProductos()">Cancelar</button>
+                            <button type="submit" class="btn-form-save">Guardar</button>
                         </div>
                     </form>
                 </div>
@@ -638,9 +694,9 @@
                                 <input type="text" id="editUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
                             </div>
                         </div>
-                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                            <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem; background-color: #d97706;">Actualizar Producto</button>
-                            <button type="button" class="btn-primary" style="flex: 1; padding: 0.75rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="cargarListaProductos()">Cancelar</button>
+                            <button type="submit" class="btn-form-update">Actualizar Producto</button>
                         </div>
                     </form>
                 </div>
