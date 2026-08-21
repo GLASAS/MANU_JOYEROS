@@ -32,11 +32,12 @@
         }
         .login-header { margin-bottom: 1.5rem; }
         .brand-logo-img {
-            max-width: 220px;
+            max-width: 240px;
             width: 100%;
             height: auto;
-            margin-bottom: 0.5rem;
+            margin-bottom: -0.5rem;
             object-fit: contain;
+            mix-blend-mode: multiply; /* Elimina el fondo claro del JPG y funde el marfil con el blanco */
         }
         .form-group { margin-bottom: 1.25rem; text-align: left; }
         .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 600; font-size: 0.9rem; }
@@ -100,7 +101,7 @@
             <div id="mensajeError" class="error-msg"></div>
         </form>
         <div class="login-footer-version">
-            Versión V1.1430 • MANU JOYEROS
+            Versión V1.1432 • MANU JOYEROS
         </div>
     </div>
 
