@@ -1,8 +1,8 @@
 /**
- * MANU JOYEROS - Configuración Global
+ * MANU JOYEROS - Configuración Global y Versión del Sistema
  */
 const CONFIG = {
-  // Reemplaza esta URL con la URL de tu implementación de Google Apps Script (Web App)
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxuFcEx2dSHqP-OQyPKyTFZHAVzJyIxmImHMWO3GxC0BLDoyA2wZyHu-qQjhx6eeboD/exec",
-  NOMBRE_EMPRESA: "MANU JOYEROS"
+  NOMBRE_EMPRESA: "MANU JOYEROS",
+  VERSION: "V1.1512"
 };
