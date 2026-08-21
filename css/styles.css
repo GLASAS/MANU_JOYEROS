@@ -1,3 +1,135 @@
+:root {
+    --primary: #0f172a;
+    --primary-hover: #1e293b;
+    --accent: #d97706;
+    --bg-color: #f1f5f9;
+    --white: #ffffff;
+    --text-color: #334155;
+    --error-color: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Estilos Login */
+body.login-body {
+    background-color: #0b0f19;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-card {
+    background: var(--white);
+    padding: 2.5rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-header h2 {
+    color: var(--primary);
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.login-header p {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-container input, .form-group input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.password-container input {
+    padding-right: 45px;
+}
+
+.form-group input:focus, .password-container input:focus {
+    border-color: var(--accent);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #64748b;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 0.85rem;
+    background-color: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 0.5rem;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.error-msg {
+    margin-top: 1rem;
+    color: var(--error-color);
+    font-size: 0.85rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.login-footer-version {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 0.75rem;
+}
+
 /* Layout Principal App */
 body.app-body {
     background-color: var(--bg-color);
@@ -33,6 +165,7 @@ body.app-body {
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: bold;
+    text-transform: uppercase;
 }
 
 .sidebar-nav {
@@ -44,7 +177,7 @@ body.app-body {
 .nav-link {
     display: block;
     padding: 0.75rem 1.5rem;
-    color: #9ca3af;
+    color: #94a3b8;
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s;
@@ -71,7 +204,7 @@ body.app-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .menu-toggle {
@@ -82,49 +215,106 @@ body.app-body {
     cursor: pointer;
 }
 
+.user-info {
+    font-weight: 600;
+    color: var(--primary);
+}
+
 .content-body {
-    padding: 1.5rem;
+    padding: 2rem;
     overflow-y: auto;
     flex: 1;
 }
 
+/* Banner de Bienvenida Superior */
+.welcome-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: var(--white);
+    padding: 25px 30px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+}
+
+.welcome-text h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.welcome-text h1 span {
+    color: #38bdf8;
+}
+
+.welcome-text p {
+    margin: 6px 0 0 0;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.welcome-date {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #cbd5e1;
+    text-transform: capitalize;
+}
+
+/* Cuadrícula de Métricas */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 20px;
 }
 
-.stat-card {
+.metric-card {
     background: var(--white);
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
 }
 
-.stat-card h3 {
-    font-size: 0.85rem;
-    color: #6b7280;
-    margin-bottom: 0.5rem;
+.metric-icon {
+    font-size: 24px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.metric-info h3 {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.stat-card p {
-    font-size: 1.8rem;
-    font-weight: bold;
+.metric-value {
+    margin: 4px 0 0 0;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--primary);
 }
 
-.alert-card { border-left: 4px solid var(--error-color); }
+.metric-card.alert {
+    border-left: 4px solid var(--error-color);
+}
 
 .card {
     background: var(--white);
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
 }
-
-.mt-4 { margin-top: 1.5rem; }
 
 /* Botón flotante móvil */
 .floating-scanner-btn {
@@ -160,5 +350,10 @@ body.app-body {
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+    .welcome-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
     }
 }
