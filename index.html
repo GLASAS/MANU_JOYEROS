@@ -37,28 +37,47 @@
         </header>
 
         <div class="content-body" id="contentBody">
-            <!-- Vista de Dashboard por defecto -->
-            <div class="dashboard-grid">
-                <div class="stat-card">
-                    <h3>Total Productos</h3>
-                    <p id="statProductos">0</p>
+            <!-- Banner de Bienvenida Mejorado -->
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
+                    <p>Sistema profesional de inventario y control para <strong>MANU JOYEROS</strong>.</p>
                 </div>
-                <div class="stat-card">
-                    <h3>Unidades en Stock</h3>
-                    <p id="statStock">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Valor Inventario</h3>
-                    <p id="statValor">$0</p>
-                </div>
-                <div class="stat-card alert-card">
-                    <h3>Stock Bajo</h3>
-                    <p id="statStockBajo">0</p>
+                <div class="welcome-date" id="currentDateLabel">
+                    Viernes, 21 de Agosto de 2026
                 </div>
             </div>
-            <div class="card mt-4">
-                <h3>Bienvenido a MANU JOYEROS</h3>
-                <p>Selecciona una opción del menú lateral para gestionar el inventario, entradas, salidas y reportes.</p>
+
+            <!-- Tarjetas de Métricas -->
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-icon products">📦</div>
+                    <div class="metric-info">
+                        <h3>Total Productos</h3>
+                        <p class="metric-value" id="statProductos">0</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon stock">📊</div>
+                    <div class="metric-info">
+                        <h3>Unidades en Stock</h3>
+                        <p class="metric-value" id="statStock">0</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon value">💰</div>
+                    <div class="metric-info">
+                        <h3>Valor Inventario</h3>
+                        <p class="metric-value" id="statValor">$0</p>
+                    </div>
+                </div>
+                <div class="metric-card alert">
+                    <div class="metric-icon low-stock">⚠️</div>
+                    <div class="metric-info">
+                        <h3>Stock Bajo</h3>
+                        <p class="metric-value" id="statStockBajo">0</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -71,7 +90,6 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
-        // Validar sesión activa al cargar
         document.addEventListener("DOMContentLoaded", () => {
             const usuarioGuardado = localStorage.getItem("usuario_manu");
             if (!usuarioGuardado) {
@@ -80,7 +98,12 @@
             }
             const user = JSON.parse(usuarioGuardado);
             document.getElementById("userNameLabel").textContent = user.nombre;
+            document.getElementById("userNameBanner").textContent = user.nombre;
             document.getElementById("userRoleBadge").textContent = user.rol;
+
+            // Mostrar fecha actual formateada en español
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById("currentDateLabel").textContent = new Date().toLocaleDateString('es-CO', options);
         });
 
         function cerrarSesion() {
@@ -97,19 +120,35 @@
             event.target.classList.add("active");
             document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
             
-            // Aquí enrutaremos las vistas en el siguiente paso de desarrollo
             const content = document.getElementById("contentBody");
-            if(vista === 'productos') {
-                content.innerHTML = `<div class="card"><h3>Módulo de Productos</h3><p>Próximamente: Creación detallada de joyas, características y categorías.</p></div>`;
-            } else if(vista === 'dashboard') {
-                location.reload(); // Recarga simple para limpiar por ahora
+            if(vista === 'dashboard') {
+                location.reload(); 
+            } else if(vista === 'productos') {
+                content.innerHTML = `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Catálogo de Productos y Joyas</h3>
+                            <button class="btn-primary" style="width: auto; padding: 0.75rem 1.25rem;" onclick="abrirModalNuevoProducto()">+ Nuevo Producto</button>
+                        </div>
+                        <div id="tablaProductosContainer">Cargando registros de productos...</div>
+                    </div>
+                `;
             } else {
-                content.innerHTML = `<div class="card"><h3>Módulo ${vista.toUpperCase()}</h3><p>En desarrollo para la siguiente fase.</p></div>`;
+                content.innerHTML = `
+                    <div class="card">
+                        <h3>Módulo de ${vista.toUpperCase()}</h3>
+                        <p>Este módulo se encuentra configurado en la arquitectura del sistema y listo para desplegarse.</p>
+                    </div>
+                `;
             }
         }
 
+        function abrirModalNuevoProducto() {
+            alert("Módulo detallado de creación de joyas (Material, Peso, Piedra, Costo y Precio) preparado para la siguiente fase.");
+        }
+
         function abrirEscaner() {
-            alert("Módulo de escáner de códigos de barras (Cámara / Lector físico) listo para integrarse.");
+            alert("Módulo de escáner de códigos de barras (Cámara / Lector físico) activo.");
         }
     </script>
 </body>
