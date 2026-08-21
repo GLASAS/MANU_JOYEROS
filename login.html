@@ -30,18 +30,13 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             text-align: center;
         }
-        .login-header { margin-bottom: 2rem; }
-        .brand-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #b45309; /* Tono dorado elegante */
-            letter-spacing: 1px;
-            margin-bottom: 0.3rem;
-        }
-        .brand-slogan {
-            font-size: 0.85rem;
-            color: #64748b;
-            font-style: italic;
+        .login-header { margin-bottom: 1.5rem; }
+        .brand-logo-img {
+            max-width: 220px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 0.5rem;
+            object-fit: contain;
         }
         .form-group { margin-bottom: 1.25rem; text-align: left; }
         .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 600; font-size: 0.9rem; }
@@ -87,8 +82,7 @@
 <body class="login-body">
     <div class="login-card">
         <div class="login-header">
-            <div class="brand-title">💎 MANU JOYEROS</div>
-            <div class="brand-slogan">¡Joyas que trascienden el tiempo!</div>
+            <img src="manu_joyeros.jpg" alt="MANU JOYEROS Logo" class="brand-logo-img">
         </div>
         <form id="loginForm" onsubmit="intentarLogin(event)">
             <div class="form-group">
@@ -106,7 +100,7 @@
             <div id="mensajeError" class="error-msg"></div>
         </form>
         <div class="login-footer-version">
-            Versión V1.1423 • MANU JOYEROS
+            Versión V1.2 • MANU JOYEROS
         </div>
     </div>
 
