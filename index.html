@@ -3,53 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - MANU JOYEROS</title>
+    <title>Dashboard - MANU JOYEROS</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="login-body">
-    <div class="login-card">
-        <div class="login-header">
+<body class="app-body">
+    <!-- Menú Lateral / Navegación -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
             <h2>💎 MANU JOYEROS</h2>
-            <p>Sistema Profesional de Inventario</p>
+            <span id="userRoleBadge" class="badge">Rol</span>
         </div>
-        <form id="loginForm" onsubmit="intentarLogin(event)">
-            <div class="form-group">
-                <label for="usuario">Usuario</label>
-                <input type="text" id="usuario" required placeholder="Ingrese su usuario">
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-link active" onclick="cambiarVista('dashboard')">📊 Dashboard</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('productos')">💍 Productos</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('inventario')">📦 Inventario</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('entradas')">📥 Entradas</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('salidas')">📤 Salidas</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('kardex')">📑 Kardex</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('proveedores')">🏢 Proveedores</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('usuarios')">👤 Usuarios</a>
+            <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
+        </nav>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 id="viewTitle">Dashboard General</h1>
+            <div class="user-info">
+                <span id="userNameLabel">Usuario</span>
             </div>
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" required placeholder="••••••••">
+        </header>
+
+        <div class="content-body" id="contentBody">
+            <!-- Vista de Dashboard por defecto -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <h3>Total Productos</h3>
+                    <p id="statProductos">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Unidades en Stock</h3>
+                    <p id="statStock">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Valor Inventario</h3>
+                    <p id="statValor">$0</p>
+                </div>
+                <div class="stat-card alert-card">
+                    <h3>Stock Bajo</h3>
+                    <p id="statStockBajo">0</p>
+                </div>
             </div>
-            <button type="submit" class="btn-primary" id="btnIngresar">Ingresar al Sistema</button>
-            <div id="mensajeError" class="error-msg"></div>
-        </form>
-    </div>
+            <div class="card mt-4">
+                <h3>Bienvenido a MANU JOYEROS</h3>
+                <p>Selecciona una opción del menú lateral para gestionar el inventario, entradas, salidas y reportes.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón Flotante para Escáner (Móvil) -->
+    <button class="floating-scanner-btn" onclick="abrirEscaner()" title="Escanear Código de Barras">
+        📷
+    </button>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
-        async function intentarLogin(event) {
-            event.preventDefault();
-            const usuario = document.getElementById('usuario').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const btn = document.getElementById('btnIngresar');
-            const errorDiv = document.getElementById('mensajeError');
-
-            btn.disabled = true;
-            btn.textContent = "Verificando...";
-            errorDiv.textContent = "";
-
-            const res = await API.llamar("login", { usuario, password }, "POST");
-
-            if (res.status === "success") {
-                localStorage.setItem("usuario_manu", JSON.stringify(res.usuario));
-                window.location.href = "index.html"; // Redirigir al dashboard principal
-            } else {
-                errorDiv.textContent = res.message;
-                btn.disabled = false;
-                btn.textContent = "Ingresar al Sistema";
+        // Validar sesión activa al cargar
+        document.addEventListener("DOMContentLoaded", () => {
+            const usuarioGuardado = localStorage.getItem("usuario_manu");
+            if (!usuarioGuardado) {
+                window.location.href = "login.html";
+                return;
             }
+            const user = JSON.parse(usuarioGuardado);
+            document.getElementById("userNameLabel").textContent = user.nombre;
+            document.getElementById("userRoleBadge").textContent = user.rol;
+        });
+
+        function cerrarSesion() {
+            localStorage.removeItem("usuario_manu");
+            window.location.href = "login.html";
+        }
+
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("active");
+        }
+
+        function cambiarVista(vista) {
+            document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+            event.target.classList.add("active");
+            document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
+            
+            // Aquí enrutaremos las vistas en el siguiente paso de desarrollo
+            const content = document.getElementById("contentBody");
+            if(vista === 'productos') {
+                content.innerHTML = `<div class="card"><h3>Módulo de Productos</h3><p>Próximamente: Creación detallada de joyas, características y categorías.</p></div>`;
+            } else if(vista === 'dashboard') {
+                location.reload(); // Recarga simple para limpiar por ahora
+            } else {
+                content.innerHTML = `<div class="card"><h3>Módulo ${vista.toUpperCase()}</h3><p>En desarrollo para la siguiente fase.</p></div>`;
+            }
+        }
+
+        function abrirEscaner() {
+            alert("Módulo de escáner de códigos de barras (Cámara / Lector físico) listo para integrarse.");
         }
     </script>
 </body>
