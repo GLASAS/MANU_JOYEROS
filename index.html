@@ -478,7 +478,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Nombre / Descripción *</label>
-                                <input type="text" id="prodNombre" required placeholder="Ej: Anillo Oro Esmeralda">
+                                <input type="text" id="prodNombre" required placeholder="Ej: Anillo Esmeralda">
                             </div>
                             <div class="form-group">
                                 <label>Material / Oro</label>
@@ -526,14 +526,6 @@
                                     <option value="OTRO">+ Agregar Nueva...</option>
                                 </select>
                                 <input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
-                            </div>
-                            <div class="form-group">
-                                <label>Peso (Gramos)</label>
-                                <input type="text" id="prodPeso" placeholder="Ej: 5.2G">
-                            </div>
-                            <div class="form-group">
-                                <label>Código de Barras</label>
-                                <input type="text" id="prodBarra" placeholder="Opcional (Auto)">
                             </div>
                         </div>
                         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -661,16 +653,14 @@
                 ubicacionFinal = document.getElementById("prodUbicacionNueva").value.trim().toUpperCase();
             }
 
-            const nombreBase = document.getElementById("prodNombre").value.trim();
-            const nombreCompleto = `${nombreBase} [Piedra: ${piedraFinal}, Color: ${colorFinal}]`;
-
             const data = {
                 action: "crearProducto",
-                nombre: nombreCompleto,
+                nombre: document.getElementById("prodNombre").value.trim(),
                 categoria: document.getElementById("prodCategoria").value,
                 material: materialFinal,
+                piedra: piedraFinal,
+                color: colorFinal,
                 ubicacion: ubicacionFinal,
-                codigo_barra: document.getElementById("prodBarra").value.trim(),
                 forzar_creacion: forzarCreacion
             };
 
