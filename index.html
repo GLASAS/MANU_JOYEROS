@@ -28,14 +28,23 @@
             display: block;
             object-fit: contain;
         }
-        /* Estilos de tabla y formularios profesionales */
         .table-container { overflow-x: auto; margin-top: 1rem; }
         .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
         .data-table th, .data-table td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         .data-table tr:hover { background-color: #f1f5f9; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        .form-group-full { grid-column: 1 / -1; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        select:focus { border-color: var(--accent); }
     </style>
 </head>
 <body class="app-body">
@@ -201,8 +210,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>SKU</th>
-                                    <th>Referencia</th>
+                                    <th>SKU / Ref</th>
                                     <th>Código de Barras</th>
                                     <th>Nombre del Producto</th>
                                     <th>Categoría</th>
@@ -215,11 +223,10 @@
                 productos.forEach(p => {
                     html += `
                         <tr>
-                            <td><strong>${p.SKU || '-'}</strong></td>
-                            <td>${p.Referencia || '-'}</td>
+                            <td><strong>${p.SKU || p.Referencia || '-'}</strong></td>
                             <td>${p.Codigo_Barra || '-'}</td>
                             <td>${p.Nombre}</td>
-                            <td>${p.Categoria || '-'}</td>
+                            <td><span class="badge" style="background-color: #d97706;">${p.Categoria || 'GENERAL'}</span></td>
                             <td>${p.Ubicacion || '-'}</td>
                             <td><span class="badge" style="background-color: #10b981;">${p.Estado}</span></td>
                         </tr>
@@ -240,15 +247,24 @@
                     <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)">
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Nombre del Producto *</label>
+                                <label>Categoría (Hoja Actual) *</label>
+                                <select id="prodCategoria" required>
+                                    <option value="">Seleccione una categoría...</option>
+                                    <option value="ANILLOS">ANILLOS</option>
+                                    <option value="CADENAS">CADENAS</option>
+                                    <option value="ARETES">ARETES</option>
+                                    <option value="DIJES">DIJES</option>
+                                    <option value="PULSERAS">PULSERAS</option>
+                                    <option value="PLATERIA-PIEDRAS-BISUTERIA">PLATERÍA, PIEDRAS Y BISUTERÍA</option>
+                                    <option value="ESTUCHES">ESTUCHES</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre / Descripción *</label>
                                 <input type="text" id="prodNombre" required placeholder="Ej: Anillo Oro Esmeralda">
                             </div>
                             <div class="form-group">
-                                <label>SKU</label>
-                                <input type="text" id="prodSku" placeholder="Ej: SKU-001">
-                            </div>
-                            <div class="form-group">
-                                <label>Referencia</label>
+                                <label>Referencia / SKU</label>
                                 <input type="text" id="prodRef" placeholder="Ej: REF-001">
                             </div>
                             <div class="form-group">
@@ -256,39 +272,23 @@
                                 <input type="text" id="prodBarra" placeholder="Escanear o digitar">
                             </div>
                             <div class="form-group">
-                                <label>Categoría</label>
-                                <input type="text" id="prodCategoria" placeholder="Ej: ANILLOS">
+                                <label>Material / Oro</label>
+                                <input type="text" id="prodMaterial" placeholder="Ej: ORO AMARILLO 18K">
                             </div>
                             <div class="form-group">
-                                <label>Subcategoría</label>
-                                <input type="text" id="prodSubcategoria" placeholder="Ej: ANILLOS EN ORO">
-                            </div>
-                            <div class="form-group">
-                                <label>Material</label>
-                                <input type="text" id="prodMaterial" placeholder="Ej: ORO 18K">
-                            </div>
-                            <div class="form-group">
-                                <label>Peso</label>
+                                <label>Peso (Gramos)</label>
                                 <input type="text" id="prodPeso" placeholder="Ej: 10G">
                             </div>
                             <div class="form-group">
                                 <label>Piedra</label>
-                                <input type="text" id="prodPiedra" placeholder="Ej: ESMERALDA">
-                            </div>
-                            <div class="form-group">
-                                <label>Talla</label>
-                                <input type="text" id="prodTalla" placeholder="Ej: 8">
+                                <input type="text" id="prodPiedra" placeholder="Ej: ESMERALDA LAGRIMA">
                             </div>
                             <div class="form-group">
                                 <label>Ubicación Física</label>
                                 <input type="text" id="prodUbicacion" placeholder="Ej: VITRINA V2">
                             </div>
-                            <div class="form-group">
-                                <label>Stock Mínimo</label>
-                                <input type="number" id="prodStockMin" value="2">
-                            </div>
                         </div>
-                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                             <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">Guardar Producto</button>
                             <button type="button" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
                         </div>
@@ -302,17 +302,13 @@
             const data = {
                 action: "crearProducto",
                 nombre: document.getElementById("prodNombre").value.trim(),
-                sku: document.getElementById("prodSku").value.trim(),
                 referencia: document.getElementById("prodRef").value.trim(),
                 codigo_barra: document.getElementById("prodBarra").value.trim(),
-                categoria: document.getElementById("prodCategoria").value.trim(),
-                subcategoria: document.getElementById("prodSubcategoria").value.trim(),
+                categoria: document.getElementById("prodCategoria").value,
                 material: document.getElementById("prodMaterial").value.trim(),
                 peso: document.getElementById("prodPeso").value.trim(),
                 piedra: document.getElementById("prodPiedra").value.trim(),
-                talla: document.getElementById("prodTalla").value.trim(),
-                ubicacion: document.getElementById("prodUbicacion").value.trim(),
-                stock_min: document.getElementById("prodStockMin").value.trim()
+                ubicacion: document.getElementById("prodUbicacion").value.trim()
             };
 
             const res = await API.llamar("crearProducto", data, "POST");
