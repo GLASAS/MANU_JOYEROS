@@ -34,7 +34,7 @@
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         .data-table tr:hover { background-color: #f1f5f9; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-        select {
+        select, input[type="text"], input[type="number"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #cbd5e1;
@@ -44,7 +44,7 @@
             outline: none;
             transition: border-color 0.2s;
         }
-        select:focus { border-color: var(--accent); }
+        select:focus, input:focus { border-color: var(--accent); }
     </style>
 </head>
 <body class="app-body">
@@ -210,7 +210,8 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>SKU / Ref</th>
+                                    <th>SKU (Automático)</th>
+                                    <th>Referencia</th>
                                     <th>Código de Barras</th>
                                     <th>Nombre del Producto</th>
                                     <th>Categoría</th>
@@ -223,10 +224,11 @@
                 productos.forEach(p => {
                     html += `
                         <tr>
-                            <td><strong>${p.SKU || p.Referencia || '-'}</strong></td>
+                            <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
+                            <td>${p.Referencia || '-'}</td>
                             <td>${p.Codigo_Barra || '-'}</td>
                             <td>${p.Nombre}</td>
-                            <td><span class="badge" style="background-color: #d97706;">${p.Categoria || 'GENERAL'}</span></td>
+                            <td><span class="badge" style="background-color: #0f172a;">${p.Categoria || 'GENERAL'}</span></td>
                             <td>${p.Ubicacion || '-'}</td>
                             <td><span class="badge" style="background-color: #10b981;">${p.Estado}</span></td>
                         </tr>
@@ -243,7 +245,7 @@
             const container = document.getElementById("vistaProductosInterna");
             container.innerHTML = `
                 <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
-                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya / Producto</h4>
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya / Producto (SKU Automático)</h4>
                     <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)">
                         <div class="form-grid">
                             <div class="form-group">
@@ -264,7 +266,7 @@
                                 <input type="text" id="prodNombre" required placeholder="Ej: Anillo Oro Esmeralda">
                             </div>
                             <div class="form-group">
-                                <label>Referencia / SKU</label>
+                                <label>Referencia</label>
                                 <input type="text" id="prodRef" placeholder="Ej: REF-001">
                             </div>
                             <div class="form-group">
@@ -297,7 +299,7 @@
             `;
         }
 
-        async function guardarNuevoProducto(event) {
+        async function guardarNuevoProducto(event, forzarCreacion = false, sumarCantidad = false) {
             event.preventDefault();
             const data = {
                 action: "crearProducto",
@@ -308,13 +310,22 @@
                 material: document.getElementById("prodMaterial").value.trim(),
                 peso: document.getElementById("prodPeso").value.trim(),
                 piedra: document.getElementById("prodPiedra").value.trim(),
-                ubicacion: document.getElementById("prodUbicacion").value.trim()
+                ubicacion: document.getElementById("prodUbicacion").value.trim(),
+                forzar_creacion: forzarCreacion,
+                sumar_cantidad: sumarCantidad
             };
 
             const res = await API.llamar("crearProducto", data, "POST");
+            
             if (res && res.status === "success") {
-                alert("¡Producto registrado con éxito!");
+                alert(res.message);
                 cargarListaProductos();
+            } else if (res && res.status === "existe") {
+                // Producto ya existe: Preguntar al usuario si desea sumar unidades o cancelar
+                const confirmarSuma = confirm(res.message + "\n\n¿Desea ingresar unidades adicionales de este producto al inventario?");
+                if (confirmarSuma) {
+                    guardarNuevoProducto(event, false, true); // Reintenta enviando la orden de sumar cantidad
+                }
             } else {
                 alert("Error: " + (res ? res.message : "No se pudo guardar el producto."));
             }
