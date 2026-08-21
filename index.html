@@ -5,14 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - MANU JOYEROS</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Ajuste específico para el logotipo en la barra lateral */
+        .sidebar-logo-img {
+            max-width: 160px;
+            width: 100%;
+            height: auto;
+            margin-bottom: 0.5rem;
+            display: block;
+            object-fit: contain;
+        }
+    </style>
 </head>
 <body class="app-body">
     <!-- Menú Lateral / Navegación -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>💎 MANU JOYEROS</h2>
-            <p style="font-size: 0.7rem; color: #cbd5e1; font-style: italic; margin-bottom: 0.5rem;">¡Joyas que trascienden el tiempo!</p>
-            <span id="userRoleBadge" class="badge">Rol</span>
+        <div class="sidebar-header" style="text-align: center;">
+            <img src="manu_joyeros.jpg" alt="MANU JOYEROS" class="sidebar-logo-img">
+            <span id="userRoleBadge" class="badge" style="margin-top: 5px; display: inline-block;">Rol</span>
         </div>
         <nav class="sidebar-nav">
             <a href="#" class="nav-link active" onclick="cambiarVista('dashboard')">📊 Dashboard</a>
