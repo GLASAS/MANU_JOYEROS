@@ -99,6 +99,24 @@
         .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        
+        /* Botones de acción bonitos */
+        .btn-action {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-action:hover { opacity: 0.85; }
+        .btn-edit { background-color: #d97706; color: #ffffff; }
+        .btn-delete { background-color: #ef4444; color: #ffffff; }
+
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
         @media (min-width: 768px) {
             .sidebar {
@@ -284,7 +302,7 @@
             if (esAdmin) {
                 botonNuevoHtml = `<button class="btn-primary" style="width: 100%; padding: 0.75rem;" onclick="abrirFormularioNuevoProducto()">+ Nuevo Producto</button>`;
             } else {
-                botonNuevoHtml = `<div style="background: #f1f5f9; padding: 0.75rem; border-radius: 8px; text-align: center; color: #64748b; font-size: 0.85rem;">ℹ️ Modo consulta: Solo el Administrador puede registrar nuevos ingresos.</div>`;
+                botonNuevoHtml = `<div style="background: #f1f5f9; padding: 0.75rem; border-radius: 8px; text-align: center; color: #64748b; font-size: 0.85rem;">ℹ️ Modo consulta: Solo el Administrador puede registrar y modificar ingresos.</div>`;
             }
 
             container.innerHTML = `
@@ -302,6 +320,7 @@
         async function cargarListaProductos() {
             const contenedor = document.getElementById("vistaProductosInterna");
             const res = await API.llamar("obtenerProductos", {}, "GET");
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
             
             if (res && res.status === "success") {
                 const productos = res.data;
@@ -320,11 +339,25 @@
                                     <th>Categoría</th>
                                     <th>Ubicación</th>
                                     <th>Estado</th>
+                                    ${esAdmin ? '<th>Acciones</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
                 `;
                 productos.forEach(p => {
+                    let botonesAccion = '';
+                    if (esAdmin) {
+                        const productoJson = encodeURIComponent(JSON.stringify(p));
+                        botonesAccion = `
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn-action btn-edit" onclick="abrirFormularioEditarProducto('${productoJson}')">✏️ Editar</button>
+                                    <button class="btn-action btn-delete" onclick="eliminarProducto('${p.ID_Producto}')">🗑️ Eliminar</button>
+                                </div>
+                            </td>
+                        `;
+                    }
+
                     html += `
                         <tr>
                             <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
@@ -332,6 +365,7 @@
                             <td><span class="badge" style="background-color: #0f172a; font-size: 0.75rem;">${p.ID_Categoria || '-'}</span></td>
                             <td>${p.ID_Ubicacion || '-'}</td>
                             <td><span class="badge" style="background-color: #10b981; font-size: 0.7rem;">${p.Estado || 'DISPONIBLE'}</span></td>
+                            ${botonesAccion}
                         </tr>
                     `;
                 });
@@ -410,6 +444,87 @@
                     </form>
                 </div>
             `;
+        }
+
+        function abrirFormularioEditarProducto(productoEncoded) {
+            const p = JSON.parse(decodeURIComponent(productoEncoded));
+            const container = document.getElementById("vistaProductosInterna");
+            
+            container.innerHTML = `
+                <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Editar Joya / Producto [SKU: ${p.SKU}]</h4>
+                    <form id="formEditarProducto" onsubmit="actualizarProducto(event, '${p.ID_Producto}')">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Categoría *</label>
+                                <select id="editCategoria" required>
+                                    <option value="ANILLOS" ${p.ID_Categoria === 'ANILLOS' ? 'selected' : ''}>ANILLOS</option>
+                                    <option value="CADENAS" ${p.ID_Categoria === 'CADENAS' ? 'selected' : ''}>CADENAS</option>
+                                    <option value="ARETES" ${p.ID_Categoria === 'ARETES' ? 'selected' : ''}>ARETES</option>
+                                    <option value="DIJES" ${p.ID_Categoria === 'DIJES' ? 'selected' : ''}>DIJES</option>
+                                    <option value="PULSERAS" ${p.ID_Categoria === 'PULSERAS' ? 'selected' : ''}>PULSERAS</option>
+                                    <option value="PLATERIA-PIEDRAS-BISUTERIA" ${p.ID_Categoria === 'PLATERIA-PIEDRAS-BISUTERIA' ? 'selected' : ''}>PLATERÍA Y BISUTERÍA</option>
+                                    <option value="ESTUCHES" ${p.ID_Categoria === 'ESTUCHES' ? 'selected' : ''}>ESTUCHES</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre / Descripción *</label>
+                                <input type="text" id="editNombre" required value="${p.Nombre || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Material / Oro</label>
+                                <input type="text" id="editMaterial" value="${p.ID_Proveedor || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Ubicación Física</label>
+                                <input type="text" id="editUbicacion" value="${p.ID_Ubicacion || ''}">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem; background-color: #d97706;">Actualizar Producto</button>
+                            <button type="button" class="btn-primary" style="flex: 1; padding: 0.75rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function actualizarProducto(event, idProducto) {
+            event.preventDefault();
+            const data = {
+                action: "editarProducto",
+                id_producto: idProducto,
+                nombre: document.getElementById("editNombre").value.trim(),
+                categoria: document.getElementById("editCategoria").value,
+                material: document.getElementById("editMaterial").value.trim(),
+                ubicacion: document.getElementById("editUbicacion").value.trim()
+            };
+
+            const res = await API.llamar("editarProducto", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                cargarListaProductos();
+            } else {
+                alert("Error al actualizar: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        async function eliminarProducto(idProducto) {
+            const confirmar = confirm("¿Está seguro de que desea eliminar este producto del inventario?");
+            if (!confirmar) return;
+
+            const data = {
+                action: "eliminarProducto",
+                id_producto: idProducto
+            };
+
+            const res = await API.llamar("eliminarProducto", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                cargarListaProductos();
+            } else {
+                alert("Error al eliminar: " + (res ? res.message : "Desconocido"));
+            }
         }
 
         function verificarNuevoMaterial(select) {
