@@ -592,11 +592,50 @@
                             </div>
                             <div class="form-group">
                                 <label>Material / Oro</label>
-                                <input type="text" id="editMaterial" value="${p.ID_Proveedor || ''}">
+                                <select id="editMaterialSelect" onchange="verificarCampoDinamico(this, 'editMaterialNuevo')">
+                                    <option value="ORO AMARILLO 18K" ${p.ID_Proveedor === 'ORO AMARILLO 18K' ? 'selected' : ''}>ORO AMARILLO 18K</option>
+                                    <option value="ORO BLANCO 18K" ${p.ID_Proveedor === 'ORO BLANCO 18K' ? 'selected' : ''}>ORO BLANCO 18K</option>
+                                    <option value="TRES OROS" ${p.ID_Proveedor === 'TRES OROS' ? 'selected' : ''}>TRES OROS</option>
+                                    <option value="PLATA 925" ${p.ID_Proveedor === 'PLATA 925' ? 'selected' : ''}>PLATA 925</option>
+                                    <option value="OTRO">+ Agregar Nuevo...</option>
+                                </select>
+                                <input type="text" id="editMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo material" value="${p.ID_Proveedor || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Piedra</label>
+                                <select id="editPiedraSelect" onchange="verificarCampoDinamico(this, 'editPiedraNueva')">
+                                    <option value="ESMERALDA">ESMERALDA</option>
+                                    <option value="DIAMANTE">DIAMANTE</option>
+                                    <option value="RUBI">RUBÍ</option>
+                                    <option value="ZAFIRO">ZAFIRO</option>
+                                    <option value="CIRCON">CIRCÓN</option>
+                                    <option value="SIN PIEDRA">SIN PIEDRA</option>
+                                    <option value="OTRO">+ Agregar Nueva...</option>
+                                </select>
+                                <input type="text" id="editPiedraNueva" style="display:none; margin-top:5px;" placeholder="Digite el nuevo tipo de piedra">
+                            </div>
+                            <div class="form-group">
+                                <label>Color</label>
+                                <select id="editColorSelect" onchange="verificarCampoDinamico(this, 'editColorNuevo')">
+                                    <option value="AMARILLO">AMARILLO</option>
+                                    <option value="BLANCO">BLANCO</option>
+                                    <option value="ROSADO">ROSADO</option>
+                                    <option value="VERDE">VERDE</option>
+                                    <option value="AZUL">AZUL</option>
+                                    <option value="OTRO">+ Agregar Nuevo...</option>
+                                </select>
+                                <input type="text" id="editColorNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo color">
                             </div>
                             <div class="form-group">
                                 <label>Ubicación Física</label>
-                                <input type="text" id="editUbicacion" value="${p.ID_Ubicacion || ''}">
+                                <select id="editUbicacionSelect" onchange="verificarCampoDinamico(this, 'editUbicacionNueva')">
+                                    <option value="VITRINA 1" ${p.ID_Ubicacion === 'VITRINA 1' ? 'selected' : ''}>VITRINA 1</option>
+                                    <option value="VITRINA 2" ${p.ID_Ubicacion === 'VITRINA 2' ? 'selected' : ''}>VITRINA 2</option>
+                                    <option value="VITRINA PRINCIPAL" ${p.ID_Ubicacion === 'VITRINA PRINCIPAL' ? 'selected' : ''}>VITRINA PRINCIPAL</option>
+                                    <option value="CAJA FUERTE" ${p.ID_Ubicacion === 'CAJA FUERTE' ? 'selected' : ''}>CAJA FUERTE</option>
+                                    <option value="OTRO">+ Agregar Nueva...</option>
+                                </select>
+                                <input type="text" id="editUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
                             </div>
                         </div>
                         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -610,13 +649,36 @@
 
         async function actualizarProducto(event, idProducto) {
             event.preventDefault();
+            
+            let materialFinal = document.getElementById("editMaterialSelect").value;
+            if (materialFinal === "OTRO") {
+                materialFinal = document.getElementById("editMaterialNuevo").value.trim().toUpperCase();
+            }
+
+            let piedraFinal = document.getElementById("editPiedraSelect").value;
+            if (piedraFinal === "OTRO") {
+                piedraFinal = document.getElementById("editPiedraNueva").value.trim().toUpperCase();
+            }
+
+            let colorFinal = document.getElementById("editColorSelect").value;
+            if (colorFinal === "OTRO") {
+                colorFinal = document.getElementById("editColorNuevo").value.trim().toUpperCase();
+            }
+
+            let ubicacionFinal = document.getElementById("editUbicacionSelect").value;
+            if (ubicacionFinal === "OTRO") {
+                ubicacionFinal = document.getElementById("editUbicacionNueva").value.trim().toUpperCase();
+            }
+
             const data = {
                 action: "editarProducto",
                 id_producto: idProducto,
                 nombre: document.getElementById("editNombre").value.trim(),
                 categoria: document.getElementById("editCategoria").value,
-                material: document.getElementById("editMaterial").value.trim(),
-                ubicacion: document.getElementById("editUbicacion").value.trim()
+                material: materialFinal,
+                piedra: piedraFinal,
+                color: colorFinal,
+                ubicacion: ubicacionFinal
             };
 
             const res = await API.llamar("editarProducto", data, "POST");
