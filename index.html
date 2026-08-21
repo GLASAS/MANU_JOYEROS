@@ -13,7 +13,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         .sidebar-logo-container {
-            background-color: #ffffff; /* Fondo blanco exacto que se funde con tu JPG */
+            background-color: #ffffff;
             padding: 6px;
             border-radius: 8px;
             display: inline-block;
@@ -28,6 +28,14 @@
             display: block;
             object-fit: contain;
         }
+        /* Estilos de tabla y formularios profesionales */
+        .table-container { overflow-x: auto; margin-top: 1rem; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+        .data-table th, .data-table td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; }
+        .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        .data-table tr:hover { background-color: #f1f5f9; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group-full { grid-column: 1 / -1; }
     </style>
 </head>
 <body class="app-body">
@@ -42,14 +50,14 @@
             </div>
         </div>
         <nav class="sidebar-nav">
-            <a href="#" class="nav-link active" onclick="cambiarVista('dashboard')">📊 Dashboard</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('productos')">💍 Productos</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('inventario')">📦 Inventario</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('entradas')">📥 Entradas</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('salidas')">📤 Salidas</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('kardex')">📑 Kardex</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('proveedores')">🏢 Proveedores</a>
-            <a href="#" class="nav-link" onclick="cambiarVista('usuarios')">👤 Usuarios</a>
+            <a href="#" class="nav-link active" onclick="cambiarVista('dashboard', event)">📊 Dashboard</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('productos', event)">💍 Productos</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('inventario', event)">📦 Inventario</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('entradas', event)">📥 Entradas</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('salidas', event)">📤 Salidas</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('kardex', event)">📑 Kardex</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('proveedores', event)">🏢 Proveedores</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('usuarios', event)">👤 Usuarios</a>
             <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
         </nav>
     </aside>
@@ -65,7 +73,7 @@
         </header>
 
         <div class="content-body" id="contentBody">
-            <!-- Banner de Bienvenida Mejorado -->
+            <!-- Banner de Bienvenida -->
             <div class="welcome-banner">
                 <div class="welcome-text">
                     <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
@@ -142,24 +150,18 @@
             document.getElementById("sidebar").classList.toggle("active");
         }
 
-        function cambiarVista(vista) {
-            document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
-            event.target.classList.add("active");
-            document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
+        function cambiarVista(vista, event) {
+            if (event) {
+                document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+                event.target.classList.add("active");
+                document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
+            }
             
             const content = document.getElementById("contentBody");
             if(vista === 'dashboard') {
                 location.reload(); 
             } else if(vista === 'productos') {
-                content.innerHTML = `
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3>Catálogo de Productos y Joyas</h3>
-                            <button class="btn-primary" style="width: auto; padding: 0.75rem 1.25rem;" onclick="abrirModalNuevoProducto()">+ Nuevo Producto</button>
-                        </div>
-                        <div id="tablaProductosContainer">Cargando registros de productos...</div>
-                    </div>
-                `;
+                renderizarModuloProductos(content);
             } else {
                 content.innerHTML = `
                     <div class="card">
@@ -170,8 +172,156 @@
             }
         }
 
-        function abrirModalNuevoProducto() {
-            alert("Módulo detallado de creación de joyas preparado para la siguiente fase.");
+        async function renderizarModuloProductos(container) {
+            container.innerHTML = `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Catálogo de Productos y Joyas</h3>
+                        <button class="btn-primary" style="width: auto; padding: 0.75rem 1.25rem;" onclick="abrirFormularioNuevoProducto()">+ Nuevo Producto</button>
+                    </div>
+                    <div id="vistaProductosInterna">Cargando catálogo...</div>
+                </div>
+            `;
+            cargarListaProductos();
+        }
+
+        async function cargarListaProductos() {
+            const contenedor = document.getElementById("vistaProductosInterna");
+            const res = await API.llamar("obtenerProductos", {}, "GET");
+            
+            if (res && res.status === "success") {
+                const productos = res.data;
+                if (productos.length === 0) {
+                    contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay productos registrados en el sistema.</p>`;
+                    return;
+                }
+
+                let html = `
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Referencia</th>
+                                    <th>Código de Barras</th>
+                                    <th>Nombre del Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Ubicación</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                productos.forEach(p => {
+                    html += `
+                        <tr>
+                            <td><strong>${p.SKU || '-'}</strong></td>
+                            <td>${p.Referencia || '-'}</td>
+                            <td>${p.Codigo_Barra || '-'}</td>
+                            <td>${p.Nombre}</td>
+                            <td>${p.Categoria || '-'}</td>
+                            <td>${p.Ubicacion || '-'}</td>
+                            <td><span class="badge" style="background-color: #10b981;">${p.Estado}</span></td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>`;
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = `<p style="color: #ef4444;">Error al cargar el inventario de productos.</p>`;
+            }
+        }
+
+        function abrirFormularioNuevoProducto() {
+            const container = document.getElementById("vistaProductosInterna");
+            container.innerHTML = `
+                <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya / Producto</h4>
+                    <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre del Producto *</label>
+                                <input type="text" id="prodNombre" required placeholder="Ej: Anillo Oro Esmeralda">
+                            </div>
+                            <div class="form-group">
+                                <label>SKU</label>
+                                <input type="text" id="prodSku" placeholder="Ej: SKU-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Referencia</label>
+                                <input type="text" id="prodRef" placeholder="Ej: REF-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Código de Barras Único</label>
+                                <input type="text" id="prodBarra" placeholder="Escanear o digitar">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoría</label>
+                                <input type="text" id="prodCategoria" placeholder="Ej: ANILLOS">
+                            </div>
+                            <div class="form-group">
+                                <label>Subcategoría</label>
+                                <input type="text" id="prodSubcategoria" placeholder="Ej: ANILLOS EN ORO">
+                            </div>
+                            <div class="form-group">
+                                <label>Material</label>
+                                <input type="text" id="prodMaterial" placeholder="Ej: ORO 18K">
+                            </div>
+                            <div class="form-group">
+                                <label>Peso</label>
+                                <input type="text" id="prodPeso" placeholder="Ej: 10G">
+                            </div>
+                            <div class="form-group">
+                                <label>Piedra</label>
+                                <input type="text" id="prodPiedra" placeholder="Ej: ESMERALDA">
+                            </div>
+                            <div class="form-group">
+                                <label>Talla</label>
+                                <input type="text" id="prodTalla" placeholder="Ej: 8">
+                            </div>
+                            <div class="form-group">
+                                <label>Ubicación Física</label>
+                                <input type="text" id="prodUbicacion" placeholder="Ej: VITRINA V2">
+                            </div>
+                            <div class="form-group">
+                                <label>Stock Mínimo</label>
+                                <input type="number" id="prodStockMin" value="2">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">Guardar Producto</button>
+                            <button type="button" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem; background-color: #64748b;" onclick="cargarListaProductos()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function guardarNuevoProducto(event) {
+            event.preventDefault();
+            const data = {
+                action: "crearProducto",
+                nombre: document.getElementById("prodNombre").value.trim(),
+                sku: document.getElementById("prodSku").value.trim(),
+                referencia: document.getElementById("prodRef").value.trim(),
+                codigo_barra: document.getElementById("prodBarra").value.trim(),
+                categoria: document.getElementById("prodCategoria").value.trim(),
+                subcategoria: document.getElementById("prodSubcategoria").value.trim(),
+                material: document.getElementById("prodMaterial").value.trim(),
+                peso: document.getElementById("prodPeso").value.trim(),
+                piedra: document.getElementById("prodPiedra").value.trim(),
+                talla: document.getElementById("prodTalla").value.trim(),
+                ubicacion: document.getElementById("prodUbicacion").value.trim(),
+                stock_min: document.getElementById("prodStockMin").value.trim()
+            };
+
+            const res = await API.llamar("crearProducto", data, "POST");
+            if (res && res.status === "success") {
+                alert("¡Producto registrado con éxito!");
+                cargarListaProductos();
+            } else {
+                alert("Error: " + (res ? res.message : "No se pudo guardar el producto."));
+            }
         }
 
         function abrirEscaner() {
