@@ -87,7 +87,7 @@
             <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
         </nav>
         <div class="sidebar-footer-version" id="versionSidebarLabel">
-            MANU JOYEROS
+            Versión V1.1512 • MANU JOYEROS
         </div>
     </aside>
 
@@ -167,7 +167,9 @@
             document.getElementById("userRoleBadge").textContent = user.rol;
 
             // Inyectar versión centralizada desde config.js
-            document.getElementById("versionSidebarLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
+            if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
+                document.getElementById("versionSidebarLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
+            }
 
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById("currentDateLabel").textContent = new Date().toLocaleDateString('es-CO', options);
