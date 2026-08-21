@@ -31,14 +31,25 @@
             text-align: center;
         }
         .login-header { margin-bottom: 1.5rem; }
+        
+        /* Contenedor tipo placa elegante que unifica el tono de la imagen con la tarjeta */
+        .brand-logo-wrapper {
+            background-color: #FAF8F5;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #f1ede4;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
         .brand-logo-img {
-            max-width: 240px;
+            max-width: 220px;
             width: 100%;
             height: auto;
-            margin-bottom: -0.5rem;
+            display: block;
             object-fit: contain;
-            mix-blend-mode: multiply; /* Elimina el fondo claro del JPG y funde el marfil con el blanco */
         }
+        
         .form-group { margin-bottom: 1.25rem; text-align: left; }
         .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-color); font-weight: 600; font-size: 0.9rem; }
         .password-container { position: relative; display: flex; align-items: center; }
@@ -83,7 +94,9 @@
 <body class="login-body">
     <div class="login-card">
         <div class="login-header">
-            <img src="manu_joyeros.jpg" alt="MANU JOYEROS Logo" class="brand-logo-img">
+            <div class="brand-logo-wrapper">
+                <img src="manu_joyeros.jpg" alt="MANU JOYEROS Logo" class="brand-logo-img">
+            </div>
         </div>
         <form id="loginForm" onsubmit="intentarLogin(event)">
             <div class="form-group">
@@ -101,7 +114,7 @@
             <div id="mensajeError" class="error-msg"></div>
         </form>
         <div class="login-footer-version">
-            Versión V1.1432 • MANU JOYEROS
+            Versión V1.1436 • MANU JOYEROS
         </div>
     </div>
 
