@@ -6,6 +6,11 @@
     <title>Dashboard - MANU JOYEROS</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
         .sidebar-header {
             background-color: #0f172a;
             padding: 1rem;
@@ -27,6 +32,19 @@
             height: auto;
             display: block;
             object-fit: contain;
+        }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+        }
+        /* Estilo para la versión al pie del menú lateral */
+        .sidebar-footer-version {
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background-color: #0b0f19;
         }
         .table-container { overflow-x: auto; margin-top: 1rem; }
         .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
@@ -69,6 +87,9 @@
             <a href="#" class="nav-link" onclick="cambiarVista('usuarios', event)">👤 Usuarios</a>
             <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
         </nav>
+        <div class="sidebar-footer-version">
+            Versión V1.2 • MANU JOYEROS
+        </div>
     </aside>
 
     <!-- Contenido Principal -->
@@ -321,10 +342,9 @@
                 alert(res.message);
                 cargarListaProductos();
             } else if (res && res.status === "existe") {
-                // Producto ya existe: Preguntar al usuario si desea sumar unidades o cancelar
                 const confirmarSuma = confirm(res.message + "\n\n¿Desea ingresar unidades adicionales de este producto al inventario?");
                 if (confirmarSuma) {
-                    guardarNuevoProducto(event, false, true); // Reintenta enviando la orden de sumar cantidad
+                    guardarNuevoProducto(event, false, true);
                 }
             } else {
                 alert("Error: " + (res ? res.message : "No se pudo guardar el producto."));
