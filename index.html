@@ -93,17 +93,8 @@
 
         .btn-action-container { display: flex; gap: 6px; align-items: center; }
         .btn-action {
-            width: 34px;
-            height: 34px;
-            border: 1.5px solid;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8fafc;
+            width: 34px; height: 34px; border: 1.5px solid; border-radius: 8px; font-size: 0.95rem; cursor: pointer;
+            transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; background-color: #f8fafc;
         }
         .btn-action:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn-edit { border-color: #3b82f6; color: #3b82f6; }
@@ -113,41 +104,20 @@
 
         .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 1.5rem; }
         .btn-form-save {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #ffffff;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
-            transition: all 0.2s ease;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: none;
+            padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2); transition: all 0.2s ease;
         }
         .btn-form-save:hover { transform: translateY(-1px); }
         .btn-form-update {
-            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-            color: #ffffff;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            box-shadow: 0 3px 8px rgba(217, 119, 6, 0.2);
-            transition: all 0.2s ease;
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; border: none;
+            padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer;
+            box-shadow: 0 3px 8px rgba(217, 119, 6, 0.2); transition: all 0.2s ease;
         }
         .btn-form-update:hover { transform: translateY(-1px); }
         .btn-form-cancel {
-            background-color: #f1f5f9;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 24px;
+            border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;
         }
         .btn-form-cancel:hover { background-color: #e2e8f0; color: #0f172a; }
 
@@ -160,15 +130,9 @@
             .content-body { padding: 2rem; }
             .form-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         }
-        select, input[type="text"], input[type="password"], input[type="number"] {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 1rem;
-            background-color: #fff;
-            outline: none;
-            transition: border-color 0.2s;
+        select, input[type="text"], input[type="password"], input[type="number"], input[type="file"] {
+            width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;
+            background-color: #fff; outline: none; transition: border-color 0.2s;
         }
         select:focus, input:focus { border-color: var(--accent); }
     </style>
@@ -226,6 +190,7 @@
     <script src="js/api.js"></script>
     <script>
         let usuarioActual = null;
+        let fotoBase64Temporal = "";
 
         document.addEventListener("click", function(e) {
             const btn = e.target.closest("button");
@@ -334,17 +299,19 @@
                 if (productos.length === 0) { contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay productos registrados.</p>`; return; }
 
                 let html = `<div class="table-container"><table class="data-table"><thead><tr>
-                    <th>SKU</th><th>Producto</th><th>Categoría</th><th>Peso</th><th>Costo</th><th>Margen</th><th>Desc.</th><th>Ubicación</th><th>Fecha</th>
+                    <th>Foto</th><th>SKU</th><th>Producto</th><th>Categoría</th><th>Peso</th><th>Costo</th><th>Margen</th><th>Desc.</th><th>Ubicación</th><th>Fecha</th>
                     ${esAdmin ? '<th>Acciones</th>' : ''}
                 </tr></thead><tbody>`;
 
                 productos.forEach(p => {
+                    let fotoHtml = p.Foto ? `<img src="${p.Foto}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;">` : `<span style="font-size: 1.2rem;">💍</span>`;
                     let botonesAccion = esAdmin ? `<td><div class="btn-action-container">
                         <button class="btn-action btn-edit" onclick="abrirFormularioEditarProducto('${encodeURIComponent(JSON.stringify(p))}')" title="Editar">✏️</button>
                         <button class="btn-action btn-delete" onclick="eliminarProducto('${p.ID_Producto}')" title="Eliminar">🗑️</button>
                     </div></td>` : '';
 
                     html += `<tr>
+                        <td>${fotoHtml}</td>
                         <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
                         <td>${p.Nombre || '-'}</td>
                         <td><span class="badge" style="background-color: #0f172a; font-size: 0.75rem;">${p.ID_Categoria || '-'}</span></td>
@@ -365,6 +332,7 @@
         }
 
         function abrirFormularioNuevoProducto() {
+            fotoBase64Temporal = "";
             document.getElementById("vistaProductosInterna").innerHTML = `
                 <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
                     <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya</h4>
@@ -394,6 +362,16 @@
                             <div class="form-group"><label>Ubicación Física</label><select id="prodUbicacionSelect" onchange="verificarCampoDinamico(this, 'prodUbicacionNueva')">
                                 <option value="VITRINA 1">VITRINA 1</option><option value="VITRINA 2">VITRINA 2</option><option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option><option value="CAJA FUERTE">CAJA FUERTE</option><option value="OTRO">+ Agregar...</option>
                             </select><input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Nueva ubicación"></div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>📸 Foto del Producto (Cámara o Galería)</label>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                                    <input type="file" accept="image/*" capture="environment" id="inputFotoProd" onchange="procesarImagen(event, 'previewProd')">
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <img id="previewProd" src="" style="max-width: 120px; max-height: 120px; display: none; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: cover;">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn-form-cancel" onclick="cargarListaProductos()">Cancelar</button>
@@ -405,6 +383,7 @@
 
         function abrirFormularioEditarProducto(productoEncoded) {
             const p = JSON.parse(decodeURIComponent(productoEncoded));
+            fotoBase64Temporal = p.Foto || "";
             document.getElementById("vistaProductosInterna").innerHTML = `
                 <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
                     <h4 style="margin-bottom: 1rem; color: #0f172a;">Editar Joya / Producto [SKU: ${p.SKU}]</h4>
@@ -429,6 +408,16 @@
                                 <option value="SI" ${p.Tiene_Descuento === 'SI' ? 'selected' : ''}>SÍ</option>
                             </select></div>
                             <div class="form-group"><label>Ubicación Física</label><input type="text" id="editUbicacion" value="${p.ID_Ubicacion || ''}"></div>
+
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>📸 Actualizar Foto (Cámara o Galería)</label>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                                    <input type="file" accept="image/*" capture="environment" id="inputFotoEdit" onchange="procesarImagen(event, 'previewEdit')">
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <img id="previewEdit" src="${p.Foto || ''}" style="max-width: 120px; max-height: 120px; ${p.Foto ? '' : 'display:none;'} border-radius: 8px; border: 1px solid #cbd5e1; object-fit: cover;">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn-form-cancel" onclick="cargarListaProductos()">Cancelar</button>
@@ -436,6 +425,42 @@
                         </div>
                     </form>
                 </div>`;
+        }
+
+        function procesarImagen(event, previewId) {
+            const archivo = event.target.files[0];
+            if (!archivo) return;
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                // Comprimir la imagen mediante canvas para evitar sobrecargar Google Sheets
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    fotoBase64Temporal = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    const preview = document.getElementById(previewId);
+                    preview.src = fotoBase64Temporal;
+                    preview.style.display = 'block';
+                }
+                img.src = e.target.result;
+            }
+            lector.readAsDataURL(archivo);
         }
 
         async function guardarNuevoProducto(event, forzarCreacion = false) {
@@ -457,6 +482,7 @@
                 porcentaje_venta: document.getElementById("prodMargen").value || 0,
                 tiene_descuento: document.getElementById("prodDescuento").value,
                 ubicacion: ubicacion,
+                foto: fotoBase64Temporal,
                 forzar_creacion: forzarCreacion
             };
 
@@ -479,7 +505,8 @@
                 valor_compra: document.getElementById("editCompra").value || 0,
                 porcentaje_venta: document.getElementById("editMargen").value || 0,
                 tiene_descuento: document.getElementById("editDescuento").value,
-                ubicacion: document.getElementById("editUbicacion").value.trim()
+                ubicacion: document.getElementById("editUbicacion").value.trim(),
+                foto: fotoBase64Temporal
             };
 
             const res = await API.llamar("editarProducto", data, "POST");
