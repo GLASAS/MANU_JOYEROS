@@ -18,9 +18,7 @@
             transition: transform 0.3s ease-in-out;
             z-index: 1000;
         }
-        .sidebar.active {
-            transform: translateX(0);
-        }
+        .sidebar.active { transform: translateX(0); }
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -31,9 +29,7 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
-        .sidebar-overlay.active {
-            display: block;
-        }
+        .sidebar-overlay.active { display: block; }
         .sidebar-header {
             background-color: #0f172a;
             padding: 1rem;
@@ -50,16 +46,8 @@
             margin: 0 auto;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .sidebar-logo-img {
-            width: 100%;
-            height: auto;
-            display: block;
-            object-fit: contain;
-        }
-        .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-        }
+        .sidebar-logo-img { width: 100%; height: auto; display: block; object-fit: contain; }
+        .sidebar-nav { flex: 1; overflow-y: auto; }
         .sidebar-footer-version {
             padding: 1rem;
             text-align: center;
@@ -68,13 +56,7 @@
             border-top: 1px solid rgba(255,255,255,0.1);
             background-color: #0b0f19;
         }
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            overflow: hidden;
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; width: 100%; overflow: hidden; }
         .top-bar {
             background: #ffffff;
             padding: 1rem;
@@ -83,27 +65,14 @@
             align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .menu-toggle {
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            cursor: pointer;
-            color: #0f172a;
-        }
-        .content-body {
-            padding: 1rem;
-            overflow-y: auto;
-            flex: 1;
-        }
+        .menu-toggle { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #0f172a; }
+        .content-body { padding: 1rem; overflow-y: auto; flex: 1; }
         .table-container { overflow-x: auto; margin-top: 1rem; }
         .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
         .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         
-        button.is-loading {
-            opacity: 0.5 !important;
-            pointer-events: none !important;
-        }
+        button.is-loading { opacity: 0.5 !important; pointer-events: none !important; }
 
         .btn-nuevo-producto {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -120,17 +89,9 @@
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
             transition: all 0.2s ease;
         }
-        .btn-nuevo-producto:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3);
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        }
+        .btn-nuevo-producto:hover { transform: translateY(-2px); background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
 
-        .btn-action-container {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
+        .btn-action-container { display: flex; gap: 6px; align-items: center; }
         .btn-action {
             width: 34px;
             height: 34px;
@@ -144,21 +105,13 @@
             justify-content: center;
             background-color: #f8fafc;
         }
-        .btn-action:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn-edit { border-color: #3b82f6; color: #3b82f6; }
         .btn-edit:hover { background-color: #eff6ff; }
         .btn-delete { border-color: #ef4444; color: #ef4444; }
         .btn-delete:hover { background-color: #fef2f2; }
 
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 1.5rem;
-        }
+        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 1.5rem; }
         .btn-form-save {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #ffffff;
@@ -468,9 +421,9 @@
                             </select></div>
                             <div class="form-group"><label>Nombre / Descripción *</label><input type="text" id="editNombre" required value="${p.Nombre || ''}"></div>
                             <div class="form-group"><label>Material / Oro</label><input type="text" id="editMaterial" value="${p.ID_Proveedor || ''}"></div>
-                            <div class="form-group"><label>Peso (Gramos)</label><input type="number" step="0.01" id="editPeso" value="${p.Peso || ''}"></div>
-                            <div class="form-group"><label>Valor de Compra ($)</label><input type="number" id="editCompra" value="${p.Valor_Compra || ''}"></div>
-                            <div class="form-group"><label>Porcentaje de Venta (%)</label><input type="number" id="editMargen" value="${p.Porcentaje_Venta || ''}"></div>
+                            <div class="form-group"><label>Peso (Gramos)</label><input type="number" step="0.01" id="editPeso" value="${p.Peso !== undefined ? p.Peso : ''}"></div>
+                            <div class="form-group"><label>Valor de Compra ($)</label><input type="number" id="editCompra" value="${p.Valor_Compra !== undefined ? p.Valor_Compra : ''}"></div>
+                            <div class="form-group"><label>Porcentaje de Venta (%)</label><input type="number" id="editMargen" value="${p.Porcentaje_Venta !== undefined ? p.Porcentaje_Venta : ''}"></div>
                             <div class="form-group"><label>¿Tiene Descuento?</label><select id="editDescuento">
                                 <option value="NO" ${p.Tiene_Descuento === 'NO' ? 'selected' : ''}>NO</option>
                                 <option value="SI" ${p.Tiene_Descuento === 'SI' ? 'selected' : ''}>SÍ</option>
