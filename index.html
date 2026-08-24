@@ -100,13 +100,11 @@
         .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
         .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
         
-        /* Estado transparente para evitar múltiples envíos */
         button.is-loading {
             opacity: 0.5 !important;
             pointer-events: none !important;
         }
 
-        /* Botón Moderno "+ Nuevo Producto" */
         .btn-nuevo-producto {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #ffffff;
@@ -128,7 +126,6 @@
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         }
 
-        /* Botones de acción compactos, simétricos y modernos tipo icono */
         .btn-action-container {
             display: flex;
             gap: 6px;
@@ -151,22 +148,11 @@
             transform: translateY(-1px);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .btn-edit {
-            border-color: #3b82f6;
-            color: #3b82f6;
-        }
-        .btn-edit:hover {
-            background-color: #eff6ff;
-        }
-        .btn-delete {
-            border-color: #ef4444;
-            color: #ef4444;
-        }
-        .btn-delete:hover {
-            background-color: #fef2f2;
-        }
+        .btn-edit { border-color: #3b82f6; color: #3b82f6; }
+        .btn-edit:hover { background-color: #eff6ff; }
+        .btn-delete { border-color: #ef4444; color: #ef4444; }
+        .btn-delete:hover { background-color: #fef2f2; }
 
-        /* Botones modernos de Formularios (Guardar / Actualizar / Cancelar) */
         .form-actions {
             display: flex;
             justify-content: flex-end;
@@ -185,11 +171,7 @@
             box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
             transition: all 0.2s ease;
         }
-        .btn-form-save:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 12px rgba(15, 23, 42, 0.3);
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        }
+        .btn-form-save:hover { transform: translateY(-1px); }
         .btn-form-update {
             background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
             color: #ffffff;
@@ -202,10 +184,7 @@
             box-shadow: 0 3px 8px rgba(217, 119, 6, 0.2);
             transition: all 0.2s ease;
         }
-        .btn-form-update:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 12px rgba(217, 119, 6, 0.3);
-        }
+        .btn-form-update:hover { transform: translateY(-1px); }
         .btn-form-cancel {
             background-color: #f1f5f9;
             color: #475569;
@@ -217,17 +196,11 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .btn-form-cancel:hover {
-            background-color: #e2e8f0;
-            color: #0f172a;
-        }
+        .btn-form-cancel:hover { background-color: #e2e8f0; color: #0f172a; }
 
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
         @media (min-width: 768px) {
-            .sidebar {
-                transform: translateX(0);
-                position: relative;
-            }
+            .sidebar { transform: translateX(0); position: relative; }
             .sidebar-overlay { display: none !important; }
             .main-content { margin-left: 0; }
             .menu-toggle { display: none; }
@@ -248,10 +221,8 @@
     </style>
 </head>
 <body class="app-body">
-    <!-- Capa oscura para cerrar menú al tocar afuera en móviles -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <!-- Menú Lateral / Navegación -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo-container">
@@ -273,12 +244,9 @@
             <a href="#" class="nav-link" onclick="cambiarVista('cambiar_password', event)">🔑 Cambiar Contraseña</a>
             <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
         </nav>
-        <div class="sidebar-footer-version" id="versionSidebarLabel">
-            MANU JOYEROS
-        </div>
+        <div class="sidebar-footer-version" id="versionSidebarLabel">MANU JOYEROS</div>
     </aside>
 
-    <!-- Contenido Principal -->
     <main class="main-content">
         <header class="top-bar">
             <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
@@ -289,80 +257,36 @@
         </header>
 
         <div class="content-body" id="contentBody">
-            <!-- Banner de Bienvenida -->
             <div class="welcome-banner">
                 <div class="welcome-text">
                     <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
                     <p>Sistema profesional de inventario y control de alta joyería — <em>¡Joyas que trascienden el tiempo!</em></p>
                 </div>
-                <div class="welcome-date" id="currentDateLabel" style="margin-top: 10px;">
-                    Viernes, 21 de Agosto de 2026
-                </div>
-            </div>
-
-            <!-- Tarjetas de Métricas -->
-            <div class="dashboard-grid">
-                <div class="metric-card">
-                    <div class="metric-icon products">📦</div>
-                    <div class="metric-info">
-                        <h3>Total Productos</h3>
-                        <p class="metric-value" id="statProductos">0</p>
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-icon stock">📊</div>
-                    <div class="metric-info">
-                        <h3>Unidades en Stock</h3>
-                        <p class="metric-value" id="statStock">0</p>
-                    </div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-icon value">💰</div>
-                    <div class="metric-info">
-                        <h3>Valor Inventario</h3>
-                        <p class="metric-value" id="statValor">$0</p>
-                    </div>
-                </div>
-                <div class="metric-card alert">
-                    <div class="metric-icon low-stock">⚠️</div>
-                    <div class="metric-info">
-                        <h3>Stock Bajo</h3>
-                        <p class="metric-value" id="statStockBajo">0</p>
-                    </div>
-                </div>
+                <div class="welcome-date" id="currentDateLabel" style="margin-top: 10px;"></div>
             </div>
         </div>
     </main>
 
-    <!-- Botón Flotante para Escáner (Móvil) -->
-    <button class="floating-scanner-btn" onclick="abrirEscaner()" title="Escanear Código de Barras">
-        📷
-    </button>
+    <button class="floating-scanner-btn" onclick="abrirEscaner()" title="Escanear Código de Barras">📷</button>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
         let usuarioActual = null;
 
-        // Protección inteligente anti-doble clic solo para botones de envío de formularios o acciones críticas
         document.addEventListener("click", function(e) {
             const btn = e.target.closest("button");
             if (btn && (btn.type === "submit" || btn.classList.contains("btn-action"))) {
                 if (!btn.classList.contains("is-loading")) {
                     btn.classList.add("is-loading");
-                    setTimeout(() => {
-                        btn.classList.remove("is-loading");
-                    }, 2000);
+                    setTimeout(() => { btn.classList.remove("is-loading"); }, 2000);
                 }
             }
         });
 
         document.addEventListener("DOMContentLoaded", () => {
             const usuarioGuardado = localStorage.getItem("usuario_manu");
-            if (!usuarioGuardado) {
-                window.location.href = "login.html";
-                return;
-            }
+            if (!usuarioGuardado) { window.location.href = "login.html"; return; }
             usuarioActual = JSON.parse(usuarioGuardado);
             document.getElementById("userNameLabel").textContent = usuarioActual.nombre;
             document.getElementById("userNameBanner").textContent = usuarioActual.nombre;
@@ -382,10 +306,8 @@
         }
 
         function toggleSidebar() {
-            const sidebar = document.getElementById("sidebar");
-            const overlay = document.getElementById("sidebarOverlay");
-            sidebar.classList.toggle("active");
-            overlay.classList.toggle("active");
+            document.getElementById("sidebar").classList.toggle("active");
+            document.getElementById("sidebarOverlay").classList.toggle("active");
         }
 
         function cambiarVista(vista, event) {
@@ -394,25 +316,14 @@
                 event.target.classList.add("active");
                 document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
             }
-            
-            if (window.innerWidth < 768) {
-                toggleSidebar();
-            }
+            if (window.innerWidth < 768) { toggleSidebar(); }
 
             const content = document.getElementById("contentBody");
-            if(vista === 'dashboard') {
-                location.reload(); 
-            } else if(vista === 'productos') {
-                renderizarModuloProductos(content);
-            } else if(vista === 'cambiar_password') {
-                renderizarModuloCambiarPassword(content);
-            } else {
-                content.innerHTML = `
-                    <div class="card">
-                        <h3>Módulo de ${vista.toUpperCase()}</h3>
-                        <p>Este módulo se encuentra configurado en la arquitectura del sistema y listo para desplegarse.</p>
-                    </div>
-                `;
+            if(vista === 'dashboard') { location.reload(); }
+            else if(vista === 'productos') { renderizarModuloProductos(content); }
+            else if(vista === 'cambiar_password') { renderizarModuloCambiarPassword(content); }
+            else {
+                content.innerHTML = `<div class="card"><h3>Módulo de ${vista.toUpperCase()}</h3><p>Módulo configurado en la arquitectura del sistema.</p></div>`;
             }
         }
 
@@ -421,22 +332,12 @@
                 <div class="card" style="max-width: 500px; margin: 0 auto;">
                     <h3 style="margin-bottom: 1.5rem; color: #0f172a;">🔑 Cambiar Contraseña</h3>
                     <form id="formCambiarPass" onsubmit="ejecutarCambioPassword(event)">
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label>Contraseña Actual *</label>
-                            <input type="password" id="passActual" required placeholder="••••••••">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label>Nueva Contraseña *</label>
-                            <input type="password" id="passNueva" required placeholder="••••••••">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 1.5rem;">
-                            <label>Confirmar Nueva Contraseña *</label>
-                            <input type="password" id="passConfirmar" required placeholder="••••••••">
-                        </div>
+                        <div class="form-group" style="margin-bottom: 1rem;"><label>Contraseña Actual *</label><input type="password" id="passActual" required placeholder="••••••••"></div>
+                        <div class="form-group" style="margin-bottom: 1rem;"><label>Nueva Contraseña *</label><input type="password" id="passNueva" required placeholder="••••••••"></div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;"><label>Confirmar Nueva Contraseña *</label><input type="password" id="passConfirmar" required placeholder="••••••••"></div>
                         <button type="submit" class="btn-form-save" style="width: 100%;">Actualizar Contraseña</button>
                     </form>
-                </div>
-            `;
+                </div>`;
         }
 
         async function ejecutarCambioPassword(event) {
@@ -445,42 +346,19 @@
             const passwordNueva = document.getElementById("passNueva").value.trim();
             const passwordConfirmar = document.getElementById("passConfirmar").value.trim();
 
-            if (passwordNueva !== passwordConfirmar) {
-                alert("Las nuevas contraseñas no coinciden.");
-                return;
-            }
+            if (passwordNueva !== passwordConfirmar) { alert("Las nuevas contraseñas no coinciden."); return; }
 
-            const data = {
-                action: "cambiarPassword",
-                usuario: usuarioActual.usuario,
-                password_actual: passwordActual,
-                password_nueva: passwordNueva
-            };
-
-            const res = await API.llamar("cambiarPassword", data, "POST");
-            if (res && res.status === "success") {
-                alert(res.message);
-                document.getElementById("formCambiarPass").reset();
-            } else {
-                alert("Error: " + (res ? res.message : "No se pudo actualizar la contraseña."));
-            }
+            const res = await API.llamar("cambiarPassword", { action: "cambiarPassword", usuario: usuarioActual.usuario, password_actual: passwordActual, password_nueva: passwordNueva }, "POST");
+            if (res && res.status === "success") { alert(res.message); document.getElementById("formCambiarPass").reset(); }
+            else { alert("Error: " + (res ? res.message : "No se pudo actualizar.")); }
         }
 
         async function renderizarModuloProductos(container) {
             const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
-            
-            let botonNuevoHtml = '';
-            if (esAdmin) {
-                botonNuevoHtml = `
-                    <div style="display: flex; justify-content: flex-start; margin-bottom: 1rem;">
-                        <button class="btn-nuevo-producto" onclick="abrirFormularioNuevoProducto()">
-                            ✨ + Nuevo Producto
-                        </button>
-                    </div>
-                `;
-            } else {
-                botonNuevoHtml = `<div style="background: #f1f5f9; padding: 0.75rem; border-radius: 8px; text-align: center; color: #64748b; font-size: 0.85rem;">ℹ️ Modo consulta: Solo el Administrador puede registrar y modificar ingresos.</div>`;
-            }
+            let botonNuevoHtml = esAdmin ? `
+                <div style="display: flex; justify-content: flex-start; margin-bottom: 1rem;">
+                    <button class="btn-nuevo-producto" onclick="abrirFormularioNuevoProducto()">✨ + Nuevo Producto</button>
+                </div>` : `<div style="background: #f1f5f9; padding: 0.75rem; border-radius: 8px; text-align: center; color: #64748b; font-size: 0.85rem;">ℹ️ Modo consulta: Solo el Administrador puede registrar y modificar.</div>`;
 
             container.innerHTML = `
                 <div class="card">
@@ -489,8 +367,7 @@
                         ${botonNuevoHtml}
                     </div>
                     <div id="vistaProductosInterna">Cargando catálogo...</div>
-                </div>
-            `;
+                </div>`;
             cargarListaProductos();
         }
 
@@ -501,352 +378,176 @@
             
             if (res && res.status === "success") {
                 const productos = res.data;
-                if (productos.length === 0) {
-                    contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay productos registrados en el sistema.</p>`;
-                    return;
-                }
+                if (productos.length === 0) { contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay productos registrados.</p>`; return; }
 
-                let html = `
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>SKU</th>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Ubicación</th>
-                                    <th>Estado</th>
-                                    ${esAdmin ? '<th>Acciones</th>' : ''}
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
+                let html = `<div class="table-container"><table class="data-table"><thead><tr>
+                    <th>SKU</th><th>Producto</th><th>Categoría</th><th>Peso</th><th>Costo</th><th>Margen</th><th>Desc.</th><th>Ubicación</th><th>Fecha</th>
+                    ${esAdmin ? '<th>Acciones</th>' : ''}
+                </tr></thead><tbody>`;
+
                 productos.forEach(p => {
-                    let botonesAccion = '';
-                    if (esAdmin) {
-                        const productoJson = encodeURIComponent(JSON.stringify(p));
-                        botonesAccion = `
-                            <td>
-                                <div class="btn-action-container">
-                                    <button class="btn-action btn-edit" onclick="abrirFormularioEditarProducto('${productoJson}')" title="Editar Producto">✏️</button>
-                                    <button class="btn-action btn-delete" onclick="eliminarProducto('${p.ID_Producto}')" title="Eliminar Producto">🗑️</button>
-                                </div>
-                            </td>
-                        `;
-                    }
+                    let botonesAccion = esAdmin ? `<td><div class="btn-action-container">
+                        <button class="btn-action btn-edit" onclick="abrirFormularioEditarProducto('${encodeURIComponent(JSON.stringify(p))}')" title="Editar">✏️</button>
+                        <button class="btn-action btn-delete" onclick="eliminarProducto('${p.ID_Producto}')" title="Eliminar">🗑️</button>
+                    </div></td>` : '';
 
-                    html += `
-                        <tr>
-                            <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
-                            <td>${p.Nombre || '-'}</td>
-                            <td><span class="badge" style="background-color: #0f172a; font-size: 0.75rem;">${p.ID_Categoria || '-'}</span></td>
-                            <td>${p.ID_Ubicacion || '-'}</td>
-                            <td><span class="badge" style="background-color: #10b981; font-size: 0.7rem;">${p.Estado || 'DISPONIBLE'}</span></td>
-                            ${botonesAccion}
-                        </tr>
-                    `;
+                    html += `<tr>
+                        <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
+                        <td>${p.Nombre || '-'}</td>
+                        <td><span class="badge" style="background-color: #0f172a; font-size: 0.75rem;">${p.ID_Categoria || '-'}</span></td>
+                        <td>${p.Peso ? p.Peso + 'g' : '-'}</td>
+                        <td>$${Number(p.Valor_Compra || 0).toLocaleString()}</td>
+                        <td>${p.Porcentaje_Venta || 0}%</td>
+                        <td><span class="badge" style="background-color: ${p.Tiene_Descuento === 'SI' ? '#ef4444' : '#64748b'}; font-size: 0.7rem;">${p.Tiene_Descuento || 'NO'}</span></td>
+                        <td>${p.ID_Ubicacion || '-'}</td>
+                        <td>${p.Fecha_Creacion || '-'}</td>
+                        ${botonesAccion}
+                    </tr>`;
                 });
                 html += `</tbody></table></div>`;
                 contenedor.innerHTML = html;
             } else {
-                contenedor.innerHTML = `<p style="color: #ef4444;">Error al cargar el inventario de productos.</p>`;
+                contenedor.innerHTML = `<p style="color: #ef4444;">Error al cargar el inventario.</p>`;
             }
         }
 
         function abrirFormularioNuevoProducto() {
-            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
-            if (!esAdmin) {
-                alert("Acceso denegado: Solo el Administrador puede registrar ingresos.");
-                return;
-            }
-
-            const container = document.getElementById("vistaProductosInterna");
-            container.innerHTML = `
+            document.getElementById("vistaProductosInterna").innerHTML = `
                 <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
                     <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya</h4>
                     <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)">
                         <div class="form-grid">
-                            <div class="form-group">
-                                <label>Categoría *</label>
-                                <select id="prodCategoria" required>
-                                    <option value="">Seleccione...</option>
-                                    <option value="ANILLOS">ANILLOS</option>
-                                    <option value="CADENAS">CADENAS</option>
-                                    <option value="ARETES">ARETES</option>
-                                    <option value="DIJES">DIJES</option>
-                                    <option value="PULSERAS">PULSERAS</option>
-                                    <option value="PLATERIA-PIEDRAS-BISUTERIA">PLATERÍA Y BISUTERÍA</option>
-                                    <option value="ESTUCHES">ESTUCHES</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Nombre / Descripción *</label>
-                                <input type="text" id="prodNombre" required placeholder="Ej: Anillo Esmeralda">
-                            </div>
-                            <div class="form-group">
-                                <label>Material / Oro</label>
-                                <select id="prodMaterialSelect" onchange="verificarCampoDinamico(this, 'prodMaterialNuevo')">
-                                    <option value="ORO AMARILLO 18K">ORO AMARILLO 18K</option>
-                                    <option value="ORO BLANCO 18K">ORO BLANCO 18K</option>
-                                    <option value="TRES OROS">TRES OROS</option>
-                                    <option value="PLATA 925">PLATA 925</option>
-                                    <option value="OTRO">+ Agregar Nuevo...</option>
-                                </select>
-                                <input type="text" id="prodMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo material">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo de Piedra</label>
-                                <select id="prodPiedraSelect" onchange="verificarCampoDinamico(this, 'prodPiedraNueva')">
-                                    <option value="ESMERALDA">ESMERALDA</option>
-                                    <option value="DIAMANTE">DIAMANTE</option>
-                                    <option value="RUBI">RUBÍ</option>
-                                    <option value="ZAFIRO">ZAFIRO</option>
-                                    <option value="CIRCON">CIRCÓN</option>
-                                    <option value="SIN PIEDRA">SIN PIEDRA</option>
-                                    <option value="OTRO">+ Agregar Nueva...</option>
-                                </select>
-                                <input type="text" id="prodPiedraNueva" style="display:none; margin-top:5px;" placeholder="Digite el nuevo tipo de piedra">
-                            </div>
-                            <div class="form-group">
-                                <label>Color</label>
-                                <select id="prodColorSelect" onchange="verificarCampoDinamico(this, 'prodColorNuevo')">
-                                    <option value="AMARILLO">AMARILLO</option>
-                                    <option value="BLANCO">BLANCO</option>
-                                    <option value="ROSADO">ROSADO</option>
-                                    <option value="VERDE">VERDE</option>
-                                    <option value="AZUL">AZUL</option>
-                                    <option value="OTRO">+ Agregar Nuevo...</option>
-                                </select>
-                                <input type="text" id="prodColorNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo color">
-                            </div>
-                            <div class="form-group">
-                                <label>Ubicación Física</label>
-                                <select id="prodUbicacionSelect" onchange="verificarCampoDinamico(this, 'prodUbicacionNueva')">
-                                    <option value="VITRINA 1">VITRINA 1</option>
-                                    <option value="VITRINA 2">VITRINA 2</option>
-                                    <option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option>
-                                    <option value="CAJA FUERTE">CAJA FUERTE</option>
-                                    <option value="OTRO">+ Agregar Nueva...</option>
-                                </select>
-                                <input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
-                            </div>
+                            <div class="form-group"><label>Categoría *</label><select id="prodCategoria" required>
+                                <option value="">Seleccione...</option>
+                                <option value="ANILLOS">ANILLOS</option><option value="CADENAS">CADENAS</option><option value="ARETES">ARETES</option>
+                                <option value="DIJES">DIJES</option><option value="PULSERAS">PULSERAS</option><option value="PLATERIA-PIEDRAS-BISUTERIA">PLATERÍA Y BISUTERÍA</option><option value="ESTUCHES">ESTUCHES</option>
+                            </select></div>
+                            <div class="form-group"><label>Nombre / Descripción *</label><input type="text" id="prodNombre" required placeholder="Ej: Anillo Esmeralda"></div>
+                            <div class="form-group"><label>Material / Oro</label><select id="prodMaterialSelect" onchange="verificarCampoDinamico(this, 'prodMaterialNuevo')">
+                                <option value="ORO AMARILLO 18K">ORO AMARILLO 18K</option><option value="ORO BLANCO 18K">ORO BLANCO 18K</option><option value="TRES OROS">TRES OROS</option><option value="PLATA 925">PLATA 925</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="prodMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Nuevo material"></div>
+                            <div class="form-group"><label>Tipo de Piedra</label><select id="prodPiedraSelect" onchange="verificarCampoDinamico(this, 'prodPiedraNueva')">
+                                <option value="ESMERALDA">ESMERALDA</option><option value="DIAMANTE">DIAMANTE</option><option value="RUBI">RUBÍ</option><option value="ZAFIRO">ZAFIRO</option><option value="CIRCON">CIRCÓN</option><option value="SIN PIEDRA">SIN PIEDRA</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="prodPiedraNueva" style="display:none; margin-top:5px;" placeholder="Nueva piedra"></div>
+                            <div class="form-group"><label>Color</label><select id="prodColorSelect" onchange="verificarCampoDinamico(this, 'prodColorNuevo')">
+                                <option value="AMARILLO">AMARILLO</option><option value="BLANCO">BLANCO</option><option value="ROSADO">ROSADO</option><option value="VERDE">VERDE</option><option value="AZUL">AZUL</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="prodColorNuevo" style="display:none; margin-top:5px;" placeholder="Nuevo color"></div>
+                            <div class="form-group"><label>Peso (Gramos)</label><input type="number" step="0.01" id="prodPeso" placeholder="Ej: 5.2"></div>
+                            <div class="form-group"><label>Valor de Compra ($)</label><input type="number" id="prodCompra" placeholder="Ej: 450000"></div>
+                            <div class="form-group"><label>Porcentaje de Venta (%)</label><input type="number" id="prodMargen" placeholder="Ej: 30" value="30"></div>
+                            <div class="form-group"><label>¿Tiene Descuento?</label><select id="prodDescuento">
+                                <option value="NO">NO</option><option value="SI">SÍ</option>
+                            </select></div>
+                            <div class="form-group"><label>Ubicación Física</label><select id="prodUbicacionSelect" onchange="verificarCampoDinamico(this, 'prodUbicacionNueva')">
+                                <option value="VITRINA 1">VITRINA 1</option><option value="VITRINA 2">VITRINA 2</option><option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option><option value="CAJA FUERTE">CAJA FUERTE</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Nueva ubicación"></div>
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn-form-cancel" onclick="cargarListaProductos()">Cancelar</button>
                             <button type="submit" class="btn-form-save">Guardar</button>
                         </div>
                     </form>
-                </div>
-            `;
+                </div>`;
         }
 
         function abrirFormularioEditarProducto(productoEncoded) {
             const p = JSON.parse(decodeURIComponent(productoEncoded));
-            const container = document.getElementById("vistaProductosInterna");
-            
-            container.innerHTML = `
+            document.getElementById("vistaProductosInterna").innerHTML = `
                 <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
                     <h4 style="margin-bottom: 1rem; color: #0f172a;">Editar Joya / Producto [SKU: ${p.SKU}]</h4>
                     <form id="formEditarProducto" onsubmit="actualizarProducto(event, '${p.ID_Producto}')">
                         <div class="form-grid">
-                            <div class="form-group">
-                                <label>Categoría *</label>
-                                <select id="editCategoria" required>
-                                    <option value="ANILLOS" ${p.ID_Categoria === 'ANILLOS' ? 'selected' : ''}>ANILLOS</option>
-                                    <option value="CADENAS" ${p.ID_Categoria === 'CADENAS' ? 'selected' : ''}>CADENAS</option>
-                                    <option value="ARETES" ${p.ID_Categoria === 'ARETES' ? 'selected' : ''}>ARETES</option>
-                                    <option value="DIJES" ${p.ID_Categoria === 'DIJES' ? 'selected' : ''}>DIJES</option>
-                                    <option value="PULSERAS" ${p.ID_Categoria === 'PULSERAS' ? 'selected' : ''}>PULSERAS</option>
-                                    <option value="PLATERIA-PIEDRAS-BISUTERIA" ${p.ID_Categoria === 'PLATERIA-PIEDRAS-BISUTERIA' ? 'selected' : ''}>PLATERÍA Y BISUTERÍA</option>
-                                    <option value="ESTUCHES" ${p.ID_Categoria === 'ESTUCHES' ? 'selected' : ''}>ESTUCHES</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Nombre / Descripción *</label>
-                                <input type="text" id="editNombre" required value="${p.Nombre || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Material / Oro</label>
-                                <select id="editMaterialSelect" onchange="verificarCampoDinamico(this, 'editMaterialNuevo')">
-                                    <option value="ORO AMARILLO 18K" ${p.ID_Proveedor === 'ORO AMARILLO 18K' ? 'selected' : ''}>ORO AMARILLO 18K</option>
-                                    <option value="ORO BLANCO 18K" ${p.ID_Proveedor === 'ORO BLANCO 18K' ? 'selected' : ''}>ORO BLANCO 18K</option>
-                                    <option value="TRES OROS" ${p.ID_Proveedor === 'TRES OROS' ? 'selected' : ''}>TRES OROS</option>
-                                    <option value="PLATA 925" ${p.ID_Proveedor === 'PLATA 925' ? 'selected' : ''}>PLATA 925</option>
-                                    <option value="OTRO">+ Agregar Nuevo...</option>
-                                </select>
-                                <input type="text" id="editMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo material" value="${p.ID_Proveedor || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo de Piedra</label>
-                                <select id="editPiedraSelect" onchange="verificarCampoDinamico(this, 'editPiedraNueva')">
-                                    <option value="ESMERALDA">ESMERALDA</option>
-                                    <option value="DIAMANTE">DIAMANTE</option>
-                                    <option value="RUBI">RUBÍ</option>
-                                    <option value="ZAFIRO">ZAFIRO</option>
-                                    <option value="CIRCON">CIRCÓN</option>
-                                    <option value="SIN PIEDRA">SIN PIEDRA</option>
-                                    <option value="OTRO">+ Agregar Nueva...</option>
-                                </select>
-                                <input type="text" id="editPiedraNueva" style="display:none; margin-top:5px;" placeholder="Digite el nuevo tipo de piedra">
-                            </div>
-                            <div class="form-group">
-                                <label>Color</label>
-                                <select id="editColorSelect" onchange="verificarCampoDinamico(this, 'editColorNuevo')">
-                                    <option value="AMARILLO">AMARILLO</option>
-                                    <option value="BLANCO">BLANCO</option>
-                                    <option value="ROSADO">ROSADO</option>
-                                    <option value="VERDE">VERDE</option>
-                                    <option value="AZUL">AZUL</option>
-                                    <option value="OTRO">+ Agregar Nuevo...</option>
-                                </select>
-                                <input type="text" id="editColorNuevo" style="display:none; margin-top:5px;" placeholder="Digite el nuevo color">
-                            </div>
-                            <div class="form-group">
-                                <label>Ubicación Física</label>
-                                <select id="editUbicacionSelect" onchange="verificarCampoDinamico(this, 'editUbicacionNueva')">
-                                    <option value="VITRINA 1" ${p.ID_Ubicacion === 'VITRINA 1' ? 'selected' : ''}>VITRINA 1</option>
-                                    <option value="VITRINA 2" ${p.ID_Ubicacion === 'VITRINA 2' ? 'selected' : ''}>VITRINA 2</option>
-                                    <option value="VITRINA PRINCIPAL" ${p.ID_Ubicacion === 'VITRINA PRINCIPAL' ? 'selected' : ''}>VITRINA PRINCIPAL</option>
-                                    <option value="CAJA FUERTE" ${p.ID_Ubicacion === 'CAJA FUERTE' ? 'selected' : ''}>CAJA FUERTE</option>
-                                    <option value="OTRO">+ Agregar Nueva...</option>
-                                </select>
-                                <input type="text" id="editUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Digite la nueva ubicación">
-                            </div>
+                            <div class="form-group"><label>Categoría *</label><select id="editCategoria" required>
+                                <option value="ANILLOS" ${p.ID_Categoria === 'ANILLOS' ? 'selected' : ''}>ANILLOS</option>
+                                <option value="CADENAS" ${p.ID_Categoria === 'CADENAS' ? 'selected' : ''}>CADENAS</option>
+                                <option value="ARETES" ${p.ID_Categoria === 'ARETES' ? 'selected' : ''}>ARETES</option>
+                                <option value="DIJES" ${p.ID_Categoria === 'DIJES' ? 'selected' : ''}>DIJES</option>
+                                <option value="PULSERAS" ${p.ID_Categoria === 'PULSERAS' ? 'selected' : ''}>PULSERAS</option>
+                                <option value="PLATERIA-PIEDRAS-BISUTERIA" ${p.ID_Categoria === 'PLATERIA-PIEDRAS-BISUTERIA' ? 'selected' : ''}>PLATERÍA Y BISUTERÍA</option>
+                                <option value="ESTUCHES" ${p.ID_Categoria === 'ESTUCHES' ? 'selected' : ''}>ESTUCHES</option>
+                            </select></div>
+                            <div class="form-group"><label>Nombre / Descripción *</label><input type="text" id="editNombre" required value="${p.Nombre || ''}"></div>
+                            <div class="form-group"><label>Material / Oro</label><input type="text" id="editMaterial" value="${p.ID_Proveedor || ''}"></div>
+                            <div class="form-group"><label>Peso (Gramos)</label><input type="number" step="0.01" id="editPeso" value="${p.Peso || ''}"></div>
+                            <div class="form-group"><label>Valor de Compra ($)</label><input type="number" id="editCompra" value="${p.Valor_Compra || ''}"></div>
+                            <div class="form-group"><label>Porcentaje de Venta (%)</label><input type="number" id="editMargen" value="${p.Porcentaje_Venta || ''}"></div>
+                            <div class="form-group"><label>¿Tiene Descuento?</label><select id="editDescuento">
+                                <option value="NO" ${p.Tiene_Descuento === 'NO' ? 'selected' : ''}>NO</option>
+                                <option value="SI" ${p.Tiene_Descuento === 'SI' ? 'selected' : ''}>SÍ</option>
+                            </select></div>
+                            <div class="form-group"><label>Ubicación Física</label><input type="text" id="editUbicacion" value="${p.ID_Ubicacion || ''}"></div>
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn-form-cancel" onclick="cargarListaProductos()">Cancelar</button>
                             <button type="submit" class="btn-form-update">Actualizar Producto</button>
                         </div>
                     </form>
-                </div>
-            `;
-        }
-
-        async function actualizarProducto(event, idProducto) {
-            event.preventDefault();
-            
-            let materialFinal = document.getElementById("editMaterialSelect").value;
-            if (materialFinal === "OTRO") {
-                materialFinal = document.getElementById("editMaterialNuevo").value.trim().toUpperCase();
-            }
-
-            let piedraFinal = document.getElementById("editPiedraSelect").value;
-            if (piedraFinal === "OTRO") {
-                piedraFinal = document.getElementById("editPiedraNueva").value.trim().toUpperCase();
-            }
-
-            let colorFinal = document.getElementById("editColorSelect").value;
-            if (colorFinal === "OTRO") {
-                colorFinal = document.getElementById("editColorNuevo").value.trim().toUpperCase();
-            }
-
-            let ubicacionFinal = document.getElementById("editUbicacionSelect").value;
-            if (ubicacionFinal === "OTRO") {
-                ubicacionFinal = document.getElementById("editUbicacionNueva").value.trim().toUpperCase();
-            }
-
-            const data = {
-                action: "editarProducto",
-                id_producto: idProducto,
-                nombre: document.getElementById("editNombre").value.trim(),
-                categoria: document.getElementById("editCategoria").value,
-                material: materialFinal,
-                piedra: piedraFinal,
-                color: colorFinal,
-                ubicacion: ubicacionFinal
-            };
-
-            const res = await API.llamar("editarProducto", data, "POST");
-            if (res && res.status === "success") {
-                alert(res.message);
-                cargarListaProductos();
-            } else {
-                alert("Error al actualizar: " + (res ? res.message : "Desconocido"));
-            }
-        }
-
-        async function eliminarProducto(idProducto) {
-            const confirmar = confirm("¿Está seguro de que desea eliminar este producto del inventario?");
-            if (!confirmar) return;
-
-            const data = {
-                action: "eliminarProducto",
-                id_producto: idProducto
-            };
-
-            const res = await API.llamar("eliminarProducto", data, "POST");
-            if (res && res.status === "success") {
-                alert(res.message);
-                cargarListaProductos();
-            } else {
-                alert("Error al eliminar: " + (res ? res.message : "Desconocido"));
-            }
-        }
-
-        function verificarCampoDinamico(select, inputId) {
-            const inputNuevo = document.getElementById(inputId);
-            if (select.value === "OTRO") {
-                inputNuevo.style.display = "block";
-                inputNuevo.required = true;
-                inputNuevo.focus();
-            } else {
-                inputNuevo.style.display = "none";
-                inputNuevo.required = false;
-            }
+                </div>`;
         }
 
         async function guardarNuevoProducto(event, forzarCreacion = false) {
             event.preventDefault();
-            
-            let materialFinal = document.getElementById("prodMaterialSelect").value;
-            if (materialFinal === "OTRO") {
-                materialFinal = document.getElementById("prodMaterialNuevo").value.trim().toUpperCase();
-            }
-
-            let piedraFinal = document.getElementById("prodPiedraSelect").value;
-            if (piedraFinal === "OTRO") {
-                piedraFinal = document.getElementById("prodPiedraNueva").value.trim().toUpperCase();
-            }
-
-            let colorFinal = document.getElementById("prodColorSelect").value;
-            if (colorFinal === "OTRO") {
-                colorFinal = document.getElementById("prodColorNuevo").value.trim().toUpperCase();
-            }
-
-            let ubicacionFinal = document.getElementById("prodUbicacionSelect").value;
-            if (ubicacionFinal === "OTRO") {
-                ubicacionFinal = document.getElementById("prodUbicacionNueva").value.trim().toUpperCase();
-            }
+            let material = document.getElementById("prodMaterialSelect").value === "OTRO" ? document.getElementById("prodMaterialNuevo").value.trim().toUpperCase() : document.getElementById("prodMaterialSelect").value;
+            let piedra = document.getElementById("prodPiedraSelect").value === "OTRO" ? document.getElementById("prodPiedraNueva").value.trim().toUpperCase() : document.getElementById("prodPiedraSelect").value;
+            let color = document.getElementById("prodColorSelect").value === "OTRO" ? document.getElementById("prodColorNuevo").value.trim().toUpperCase() : document.getElementById("prodColorSelect").value;
+            let ubicacion = document.getElementById("prodUbicacionSelect").value === "OTRO" ? document.getElementById("prodUbicacionNueva").value.trim().toUpperCase() : document.getElementById("prodUbicacionSelect").value;
 
             const data = {
                 action: "crearProducto",
                 nombre: document.getElementById("prodNombre").value.trim(),
                 categoria: document.getElementById("prodCategoria").value,
-                material: materialFinal,
-                piedra: piedraFinal,
-                color: colorFinal,
-                ubicacion: ubicacionFinal,
+                material: material,
+                piedra: piedra,
+                color: color,
+                peso: document.getElementById("prodPeso").value,
+                valor_compra: document.getElementById("prodCompra").value || 0,
+                porcentaje_venta: document.getElementById("prodMargen").value || 0,
+                tiene_descuento: document.getElementById("prodDescuento").value,
+                ubicacion: ubicacion,
                 forzar_creacion: forzarCreacion
             };
 
             const res = await API.llamar("crearProducto", data, "POST");
-            
-            if (res && res.status === "success") {
-                alert(res.message);
-                cargarListaProductos();
-            } else if (res && res.status === "existe") {
-                const confirmarForzar = confirm(res.message + "\n\n¿Desea registrar de todos modos este producto como un nuevo ítem?");
-                if (confirmarForzar) {
-                    guardarNuevoProducto(event, true);
-                }
-            } else {
-                alert("Error: " + (res ? res.message : "No se pudo guardar el producto."));
-            }
+            if (res && res.status === "success") { alert(res.message); cargarListaProductos(); }
+            else if (res && res.status === "existe") {
+                if (confirm(res.message + "\n\n¿Desea registrarlo de todos modos?")) { guardarNuevoProducto(event, true); }
+            } else { alert("Error: " + (res ? res.message : "Desconocido")); }
         }
 
-        function abrirEscaner() {
-            alert("Módulo de escáner de códigos de barras activo.");
+        async function actualizarProducto(event, idProducto) {
+            event.preventDefault();
+            const data = {
+                action: "editarProducto",
+                id_producto: idProducto,
+                nombre: document.getElementById("editNombre").value.trim(),
+                categoria: document.getElementById("editCategoria").value,
+                material: document.getElementById("editMaterial").value.trim(),
+                peso: document.getElementById("editPeso").value,
+                valor_compra: document.getElementById("editCompra").value || 0,
+                porcentaje_venta: document.getElementById("editMargen").value || 0,
+                tiene_descuento: document.getElementById("editDescuento").value,
+                ubicacion: document.getElementById("editUbicacion").value.trim()
+            };
+
+            const res = await API.llamar("editarProducto", data, "POST");
+            if (res && res.status === "success") { alert(res.message); cargarListaProductos(); }
+            else { alert("Error al actualizar: " + (res ? res.message : "Desconocido")); }
         }
+
+        async function eliminarProducto(idProducto) {
+            if (!confirm("¿Está seguro de eliminar este producto?")) return;
+            const res = await API.llamar("eliminarProducto", { action: "eliminarProducto", id_producto: idProducto }, "POST");
+            if (res && res.status === "success") { alert(res.message); cargarListaProductos(); }
+            else { alert("Error al eliminar."); }
+        }
+
+        function verificarCampoDinamico(select, inputId) {
+            const input = document.getElementById(inputId);
+            if (select.value === "OTRO") { input.style.display = "block"; input.required = true; input.focus(); }
+            else { input.style.display = "none"; input.required = false; }
+        }
+
+        function abrirEscaner() { alert("Módulo de escáner activo."); }
     </script>
 </body>
 </html>
