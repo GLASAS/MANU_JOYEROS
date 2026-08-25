@@ -103,9 +103,12 @@
                     return;
                 }
 
-                // Cálculo idéntico y sincronizado con el Dashboard
+                // Corrección exacta sincronizada con la tabla del Dashboard (incluyendo Valor_Piedra, Valor_Oro y Peso)
                 let valPiedraItem = (producto.Valor_Piedra !== undefined && producto.Valor_Piedra !== null && String(producto.Valor_Piedra).trim() !== "") ? Number(producto.Valor_Piedra) : 0;
                 if (isNaN(valPiedraItem)) valPiedraItem = 0;
+
+                let valOroItem = (producto.Valor_Oro !== undefined && producto.Valor_Oro !== null && String(producto.Valor_Oro).trim() !== "") ? Number(producto.Valor_Oro) : 0;
+                if (isNaN(valOroItem)) valOroItem = 0;
 
                 let margen = (producto.Porcentaje_Venta !== undefined && producto.Porcentaje_Venta !== null && String(producto.Porcentaje_Venta).trim() !== "") ? Number(producto.Porcentaje_Venta) : 100;
                 if (isNaN(margen)) margen = 100;
@@ -116,7 +119,7 @@
                 let pesoCrudo = producto.Peso !== undefined && producto.Peso !== null && String(producto.Peso).trim() !== "" ? producto.Peso : (producto.peso !== undefined && producto.peso !== null && String(producto.peso).trim() !== "" ? producto.peso : 0);
                 let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
 
-                let baseVentaCalculada = valPiedraItem + (pesoItem * valorOroDiaLocal);
+                let baseVentaCalculada = valPiedraItem + valOroItem + (pesoItem * valorOroDiaLocal);
                 let precioBase = baseVentaCalculada * (1 + (margen / 100));
                 let valorVenta = precioBase - (precioBase * (descPct / 100));
                 if (isNaN(valorVenta)) valorVenta = 0;
@@ -148,7 +151,7 @@
 
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (000) 8123125<br>
+                        NIT: 900.000.000-1 • Tel: +57 (300) 8123125<br>
                         Dirección Principal: Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
