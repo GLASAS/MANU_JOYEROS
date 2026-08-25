@@ -24,5 +24,5 @@ const API = {
       console.error("Error en comunicación con la API:", error);
       return { status: "error", message: "Error de conexión con el servidor." };
     }
-  }
+  } 
 };
