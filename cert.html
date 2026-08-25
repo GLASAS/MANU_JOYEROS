@@ -49,7 +49,7 @@
             <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
         </div>
 
-        <div class="cert-version-label" id="lblCertVersion">MANU JOYEROS</div>
+        <div class="cert-version-label" id="lblCertVersion">Versión V3.0 • MANU JOYEROS</div>
     </div>
 
     <script src="js/config.js"></script>
@@ -82,7 +82,6 @@
             }
 
             try {
-                // Consultamos el valor del oro del día y los productos de forma simultánea
                 const [resOro, resProd] = await Promise.all([
                     API.llamar("obtenerValorOroDia", {}, "GET"),
                     API.llamar("obtenerProductos", {}, "GET")
@@ -104,7 +103,6 @@
                     return;
                 }
 
-                // Extracción exacta de parámetros idéntica a la tabla del Dashboard
                 let valPiedraItem = (producto.Valor_Piedra !== undefined && producto.Valor_Piedra !== null && String(producto.Valor_Piedra).trim() !== "") ? Number(producto.Valor_Piedra) : 0;
                 if (isNaN(valPiedraItem)) valPiedraItem = 0;
 
@@ -117,7 +115,6 @@
                 let pesoCrudo = producto.Peso !== undefined && producto.Peso !== null && String(producto.Peso).trim() !== "" ? producto.Peso : (producto.peso !== undefined && producto.peso !== null && String(producto.peso).trim() !== "" ? producto.peso : 0);
                 let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
 
-                // Cálculo exacto sincronizado con la tabla del Dashboard: Valor_Piedra + (Peso * Valor Oro del Día)
                 let baseVentaCalculada = valPiedraItem + (pesoItem * valorOroDiaLocal);
                 let precioBase = baseVentaCalculada * (1 + (margen / 100));
                 let valorVenta = precioBase - (precioBase * (descPct / 100));
@@ -150,7 +147,7 @@
 
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (444) 8123125<br>
+                        NIT: 900.000.000-1 • Tel: +57 (555) 8123125<br>
                         Dirección Principal: Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
