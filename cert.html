@@ -132,3 +132,2173 @@
     </script>
 </body>
 </html>
+```[cite: 3]
+
+---
+
+### 2. Código Completo: `Code.gs` (Backend API en Google Apps Script)
+*Gestiona todas las peticiones POST y GET para el inicio de sesión, inventario, usuarios, importación masiva/exportación y actualización del valor del oro del día[cite: 4].*
+
+```javascript
+/**
+ * MANU JOYEROS - Backend API (Google Apps Script)
+ * Versión V3.0 - Gestión completa con Módulo de Actualización del Oro del Día
+ */
+
+function doPost(e) {
+  var resultado = { status: "error", message: "Solicitud POST inválida" };
+  try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "No se recibieron datos" })).setMimeType(ContentService.MimeType.JSON);
+    }
+    var data = JSON.parse(e.postData.contents);
+    var action = data.action;
+
+    if (action === "login") {
+      resultado = procesarLogin_(data.usuario, data.password);
+    } else if (action === "crearProducto") {
+      resultado = crearOActualizarProducto_(data);
+    } else if (action === "editarProducto") {
+      resultado = editarProducto_(data);
+    } else if (action === "eliminarProducto") {
+      resultado = eliminarProducto_(data);
+    } else if (action === "eliminarMasivoProductos") {
+      resultado = eliminarMasivoProductos_(data);
+    } else if (action === "importarMasivoProductos") {
+      resultado = importarMasivoProductos_(data);
+    } else if (action === "cambiarPassword") {
+      resultado = cambiarPassword_(data);
+    } else if (action === "crearUsuario") {
+      resultado = crearUsuario_(data);
+    } else if (action === "editarUsuario") {
+      resultado = editarUsuario_(data);
+    } else if (action === "eliminarUsuario") {
+      resultado = eliminarUsuario_(data);
+    } else if (action === "actualizarValorOroDia") {
+      resultado = actualizarValorOroDia_(data);
+    }
+  } catch (error) {
+    resultado = { status: "error", message: "Excepción: " + error.toString() };
+  }
+  return ContentService.createTextOutput(JSON.stringify(resultado)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var action = e.parameter.action;
+  var resultado = { status: "error", message: "Acción GET no válida" };
+
+  try {
+    if (action === "test") {
+      resultado = { status: "success", message: "Conexión exitosa con MANU JOYEROS API" };
+    } else if (action === "obtenerProductos") {
+      resultado = { status: "success", data: obtenerDatosHoja_("PRODUCTOS") };
+    } else if (action === "obtenerUsuarios") {
+      resultado = { status: "success", data: obtenerDatosHoja_("USUARIOS") };
+    } else if (action === "obtenerCategorias") {
+      resultado = obtenerCategorias_();
+    } else if (action === "obtenerMateriales") {
+      resultado = obtenerMateriales_();
+    } else if (action === "obtenerColores") {
+      resultado = obtenerColores_();
+    } else if (action === "obtenerValorOroDia") {
+      resultado = obtenerValorOroDia_();
+    }
+  } catch (error) {
+    resultado = { status: "error", message: error.toString() };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(resultado))
+                      .setMimeType(ContentService.MimeType.JSON);
+}
+
+function procesarLogin_(usuarioIngresado, passwordIngresado) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("USUARIOS");
+  if (!hoja || hoja.getLastRow() <= 1) return { status: "error", message: "No hay usuarios configurados." };
+  
+  var rango = hoja.getDataRange().getValues();
+  var headers = rango[0];
+  var rows = rango.slice(1);
+  
+  var usuIdx = headers.indexOf("Usuario");
+  var passIdx = headers.indexOf("Password_Hash");
+  if (passIdx === -1) passIdx = headers.indexOf("Password");
+  
+  var estadoIdx = headers.indexOf("Estado");
+  var nombreIdx = headers.indexOf("Nombre");
+  var rolIdx = headers.indexOf("Rol");
+  var ultimoAccesoIdx = headers.indexOf("Ultimo_Acceso");
+  var fechaVencIdx = headers.indexOf("Fecha_Vencimiento");
+  
+  for (var i = 0; i < rows.length; i++) {
+    var uRow = rows[i];
+    var usuarioVal = String(uRow[usuIdx]).trim();
+    
+    if (usuarioVal.toLowerCase() === String(usuarioIngresado).trim().toLowerCase()) {
+      if (String(uRow[passIdx]).trim() !== String(passwordIngresado).trim()) {
+        return { status: "error", message: "Usuario o contraseña incorrectos." };
+      }
+      if (estadoIdx !== -1 && String(uRow[estadoIdx]).toUpperCase() !== "ACTIVO") {
+        return { status: "error", message: "El usuario se encuentra inactivo." };
+      }
+      
+      if (fechaVencIdx !== -1 && uRow[fechaVencIdx]) {
+        var rawVenc = uRow[fechaVencIdx];
+        var fechaVenc = null;
+
+        if (rawVenc instanceof Date) {
+          fechaVenc = rawVenc;
+        } else {
+          var strVenc = String(rawVenc).trim();
+          var partes = strVenc.split(/[\/\-]/);
+          if (partes.length === 3) {
+            if (partes[0].length === 4) {
+              fechaVenc = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+            } else {
+              fechaVenc = new Date(Number(partes[2]), Number(partes[1]) - 1, Number(partes[0]));
+            }
+          } else {
+            fechaVenc = new Date(strVenc);
+          }
+        }
+
+        if (fechaVenc instanceof Date && !isNaN(fechaVenc.getTime())) {
+          var hoy = new Date();
+          hoy.setHours(0, 0, 0, 0);
+          fechaVenc.setHours(0, 0, 0, 0);
+
+          if (fechaVenc.getTime() < hoy.getTime()) {
+            var fechaStr = Utilities.formatDate(fechaVenc, "America/Bogota", "yyyy-MM-dd");
+            return { status: "error", message: "Acceso denegado: Su cuenta ha vencido (" + fechaStr + ")." };
+          }
+        }
+      }
+      
+      if (ultimoAccesoIdx !== -1) {
+        var fechaActual = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd HH:mm:ss");
+        var celdaUltimoAcceso = hoja.getRange(i + 2, ultimoAccesoIdx + 1);
+        celdaUltimoAcceso.setNumberFormat("@");
+        celdaUltimoAcceso.setValue(fechaActual);
+      }
+
+      return { 
+        status: "success", 
+        message: "Login exitoso", 
+        usuario: { nombre: uRow[nombreIdx], rol: uRow[rolIdx], usuario: uRow[usuIdx] } 
+      };
+    }
+  }
+  return { status: "error", message: "Usuario o contraseña incorrectos." };
+}
+
+function cambiarPassword_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("USUARIOS");
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  
+  var usuIdx = headers.indexOf("Usuario");
+  var passIdx = headers.indexOf("Password_Hash");
+  if (passIdx === -1) passIdx = headers.indexOf("Password");
+  
+  if (usuIdx === -1 || passIdx === -1) return { status: "error", message: "Estructura de usuarios no encontrada." };
+
+  for (var r = 1; r < filas.length; r++) {
+    if (String(filas[r][usuIdx]).trim().toLowerCase() === String(data.usuario).trim().toLowerCase()) {
+      if (String(filas[r][passIdx]).trim() !== String(data.password_actual).trim()) {
+        return { status: "error", message: "La contraseña actual es incorrecta." };
+      }
+      hoja.getRange(r + 1, passIdx + 1).setValue(data.password_nueva);
+      return { status: "success", message: "¡Contraseña actualizada con éxito!" };
+    }
+  }
+  return { status: "error", message: "Usuario no encontrado." };
+}
+
+function crearUsuario_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("USUARIOS");
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  
+  var usuIdx = headers.indexOf("Usuario");
+  for (var r = 1; r < filas.length; r++) {
+    if (String(filas[r][usuIdx]).trim().toLowerCase() === String(data.usuario).trim().toLowerCase()) {
+      return { status: "error", message: "El nombre de usuario ya existe." };
+    }
+  }
+
+  var nuevaFila = new Array(headers.length);
+  headers.forEach(function(h, index) {
+    if (h === "Usuario") nuevaFila[index] = data.usuario;
+    else if (h === "Password_Hash" || h === "Password") nuevaFila[index] = data.password;
+    else if (h === "Nombre") nuevaFila[index] = data.nombre;
+    else if (h === "Rol") nuevaFila[index] = data.rol;
+    else if (h === "Estado") nuevaFila[index] = data.estado || "ACTIVO";
+    else if (h === "Fecha_Vencimiento") nuevaFila[index] = data.fecha_vencimiento;
+    else if (h === "Ultimo_Acceso") nuevaFila[index] = "-";
+    else nuevaFila[index] = "";
+  });
+
+  var filaNum = hoja.getLastRow() + 1;
+  hoja.appendRow(nuevaFila);
+
+  var fechaVencIdx = headers.indexOf("Fecha_Vencimiento");
+  if (fechaVencIdx !== -1 && data.fecha_vencimiento) {
+    var celdaVenc = hoja.getRange(filaNum, fechaVencIdx + 1);
+    celdaVenc.setNumberFormat("@");
+    celdaVenc.setValue(data.fecha_vencimiento);
+  }
+
+  return { status: "success", message: "¡Usuario creado con éxito!" };
+}
+
+function editarUsuario_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("USUARIOS");
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  
+  var usuIdx = headers.indexOf("Usuario");
+  for (var r = 1; r < filas.length; r++) {
+    if (String(filas[r][usuIdx]).trim().toLowerCase() === String(data.usuario_original).trim().toLowerCase()) {
+      var filaNum = r + 1;
+      if (headers.indexOf("Nombre") !== -1 && data.nombre) hoja.getRange(filaNum, headers.indexOf("Nombre") + 1).setValue(data.nombre);
+      if (headers.indexOf("Rol") !== -1 && data.rol) hoja.getRange(filaNum, headers.indexOf("Rol") + 1).setValue(data.rol);
+      if (headers.indexOf("Estado") !== -1 && data.estado) hoja.getRange(filaNum, headers.indexOf("Estado") + 1).setValue(data.estado);
+      
+      if (headers.indexOf("Fecha_Vencimiento") !== -1 && data.fecha_vencimiento) {
+        var celdaVenc = hoja.getRange(filaNum, headers.indexOf("Fecha_Vencimiento") + 1);
+        celdaVenc.setNumberFormat("@");
+        celdaVenc.setValue(data.fecha_vencimiento);
+      }
+
+      if (headers.indexOf("Password_Hash") !== -1 && data.password) hoja.getRange(filaNum, headers.indexOf("Password_Hash") + 1).setValue(data.password);
+      if (headers.indexOf("Password") !== -1 && data.password) hoja.getRange(filaNum, headers.indexOf("Password") + 1).setValue(data.password);
+      
+      return { status: "success", message: "¡Usuario actualizado correctamente!" };
+    }
+  }
+  return { status: "error", message: "Usuario no encontrado para editar." };
+}
+
+function eliminarUsuario_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("USUARIOS");
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  
+  var usuIdx = headers.indexOf("Usuario");
+  for (var r = 1; r < filas.length; r++) {
+    if (String(filas[r][usuIdx]).trim().toLowerCase() === String(data.usuario).trim().toLowerCase()) {
+      hoja.deleteRow(r + 1);
+      return { status: "success", message: "¡Usuario eliminado correctamente!" };
+    }
+  }
+  return { status: "error", message: "Usuario no encontrado para eliminar." };
+}
+
+function obtenerCategorias_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var categoriasSet = {};
+  
+  var bases = ["ANILLOS", "CADENAS", "ARETES", "DIJES", "PULSERAS", "ESTUCHES"];
+  bases.forEach(function(b) { categoriasSet[b] = true; });
+
+  if (hoja && hoja.getLastRow() > 1) {
+    var valores = hoja.getDataRange().getValues();
+    var headers = valores[0];
+    var catIdx = headers.indexOf("ID_Categoria");
+    
+    if (catIdx !== -1) {
+      for (var i = 1; i < valores.length; i++) {
+        var cat = String(valores[i][catIdx]).trim().toUpperCase();
+        if (cat) { categoriasSet[cat] = true; }
+      }
+    }
+  }
+  return { status: "success", categorias: Object.keys(categoriasSet).sort() };
+}
+
+function obtenerMateriales_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var materialesSet = {};
+
+  if (hoja && hoja.getLastRow() > 1) {
+    var valores = hoja.getDataRange().getValues();
+    var headers = valores[0];
+    var matIdx = headers.indexOf("Material");
+    if (matIdx === -1) matIdx = headers.indexOf("ID_Proveedor");
+    
+    if (matIdx !== -1) {
+      for (var i = 1; i < valores.length; i++) {
+        var mat = String(valores[i][matIdx]).trim().toUpperCase();
+        if (mat) { materialesSet[mat] = true; }
+      }
+    }
+  }
+
+  if (Object.keys(materialesSet).length === 0) {
+    materialesSet["ORO"] = true;
+  }
+
+  return { status: "success", materiales: Object.keys(materialesSet).sort() };
+}
+
+function obtenerColores_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var coloresSet = {};
+
+  var bases = ["AMARILLO", "ROJO", "BLANCO", "COMBINADO"];
+  bases.forEach(function(b) { coloresSet[b] = true; });
+
+  if (hoja && hoja.getLastRow() > 1) {
+    var valores = hoja.getDataRange().getValues();
+    var headers = valores[0];
+    
+    var colIdx = headers.indexOf("Color");
+    if (colIdx === -1) colIdx = headers.indexOf("ID_Subcategoria");
+    
+    if (colIdx !== -1) {
+      for (var i = 1; i < valores.length; i++) {
+        var colorVal = String(valores[i][colIdx]).trim().toUpperCase();
+        if (colorVal && colorVal !== "N/A" && colorVal !== "-") { coloresSet[colorVal] = true; }
+      }
+    }
+  }
+
+  return { status: "success", colores: Object.keys(coloresSet).sort() };
+}
+
+function obtenerValorOroDia_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var valorOroDia = 250000;
+  
+  try {
+    var hojaConfig = ss.getSheetByName("CONFIG") || ss.getSheetByName("ORO_DIA") || ss.getSheetByName("ACTUALIZACION_ORO");
+    if (!hojaConfig) {
+      hojaConfig = ss.insertSheet("ORO_DIA");
+      hojaConfig.getRange("A1").setValue("VALOR_ORO_DIA");
+      hojaConfig.getRange("B1").setValue(250000);
+    }
+    
+    var val = hojaConfig.getRange("B1").getValue() || hojaConfig.getRange("A2").getValue();
+    if (!isNaN(val) && Number(val) > 0) {
+      valorOroDia = Number(val);
+    }
+  } catch (e) {}
+
+  return { status: "success", valor_oro_dia: valorOroDia };
+}
+
+function actualizarValorOroDia_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var valorNuevo = Number(data.valor_oro_dia);
+  if (isNaN(valorNuevo) || valorNuevo <= 0) {
+    return { status: "error", message: "El valor del oro ingresado no es válido." };
+  }
+
+  var hojaConfig = ss.getSheetByName("ORO_DIA") || ss.getSheetByName("CONFIG") || ss.getSheetByName("ACTUALIZACION_ORO");
+  if (!hojaConfig) {
+    hojaConfig = ss.insertSheet("ORO_DIA");
+    hojaConfig.getRange("A1").setValue("VALOR_ORO_DIA");
+  }
+
+  hojaConfig.getRange("B1").setValue(valorNuevo);
+  return { status: "success", message: "¡Valor del oro del día actualizado con éxito a $" + valorNuevo.toLocaleString() + "!" };
+}
+
+function crearOActualizarProducto_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var productos = obtenerDatosHoja_("PRODUCTOS");
+
+  var productoExistente = null;
+  for (var i = 0; i < productos.length; i++) {
+    var p = productos[i];
+    var mismaDescripcion = p.Nombre && p.Nombre.toLowerCase() === data.nombre.toLowerCase() && p.ID_Categoria === data.categoria;
+    var mismoCodigoBarra = data.codigo_barra && p.Codigo_Barra && p.Codigo_Barra === data.codigo_barra;
+    
+    if (mismoCodigoBarra || mismaDescripcion) {
+      productoExistente = p;
+      break;
+    }
+  }
+
+  if (productoExistente && !data.forzar_creacion) {
+    return { 
+      status: "existe", 
+      message: "¡El producto '" + productoExistente.Nombre + "' ya se encuentra registrado con el SKU " + productoExistente.SKU + "!",
+      producto: productoExistente
+    };
+  }
+
+  var catPrefijo = "JO";
+  if (data.categoria) {
+    catPrefijo = data.categoria.substring(0, 2).toUpperCase();
+  }
+  
+  var consecutivo = productos.length + 1;
+  var skuGenerado = data.sku || (catPrefijo + String(consecutivo).padStart(3, '0'));
+  var codigoBarraGenerado = data.codigo_barra || ("770" + Math.floor(100000000 + Math.random() * 900000000));
+  var idProducto = "PRD-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  var fechaCreacion = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
+
+  var valorPiedra = data.valor_piedra !== "" && !isNaN(data.valor_piedra) ? Number(data.valor_piedra) : 0;
+  var valorOro = data.valor_oro !== "" && !isNaN(data.valor_oro) ? Number(data.valor_oro) : 0;
+  var valorCompraTotal = valorPiedra + valorOro;
+  
+  var porcentajeVenta = data.porcentaje_venta !== "" && !isNaN(data.porcentaje_venta) ? Number(data.porcentaje_venta) : 100;
+  var colorSeleccionado = data.color || data.ID_Subcategoria || "";
+
+  var headers = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
+  var nuevaFila = new Array(headers.length);
+
+  headers.forEach(function(h, index) {
+    if (h === "ID_Producto") nuevaFila[index] = idProducto;
+    else if (h === "SKU") nuevaFila[index] = skuGenerado;
+    else if (h === "Ref") nuevaFila[index] = skuGenerado;
+    else if (h === "Codigo_Barra") nuevaFila[index] = codigoBarraGenerado;
+    else if (h === "Nombre") nuevaFila[index] = data.nombre;
+    else if (h === "Descripcion") nuevaFila[index] = "Piedra: " + (data.piedra || "N/A") + " | Color: " + colorSeleccionado;
+    else if (h === "ID_Categoria") nuevaFila[index] = data.categoria || "";
+    else if (h === "Material" || h === "ID_Proveedor" || h === "Material_Oro") nuevaFila[index] = data.material || data.Material_Oro || "";
+    else if (h === "Color" || h === "ID_Subcategoria") nuevaFila[index] = colorSeleccionado;
+    else if (h === "ID_Ubicacion") nuevaFila[index] = data.ubicacion || "";
+    else if (h === "Stock_Min") nuevaFila[index] = 2;
+    else if (h === "Stock_Max") nuevaFila[index] = 50;
+    else if (h === "Estado") nuevaFila[index] = "DISPONIBLE";
+    else if (h === "Fecha_Creacion") nuevaFila[index] = fechaCreacion;
+    else if (h === "Peso") nuevaFila[index] = data.peso !== "" ? String(data.peso).replace(",", ".") : "";
+    else if (h === "Valor_Compra") nuevaFila[index] = valorCompraTotal;
+    else if (h === "Porcentaje_Venta") nuevaFila[index] = porcentajeVenta;
+    else if (h === "Tiene_Descuento") nuevaFila[index] = data.tiene_descuento !== "" ? Number(data.tiene_descuento) : 0;
+    else if (h === "Valor_Piedra") nuevaFila[index] = valorPiedra;
+    else if (h === "Valor_Oro") nuevaFila[index] = valorOro;
+    else if (h === "Foto") nuevaFila[index] = data.foto || "";
+  });
+
+  var filaNum = hoja.getLastRow() + 1;
+  hoja.appendRow(nuevaFila);
+
+  var fechaCreacionIdx = headers.indexOf("Fecha_Creacion");
+  if (fechaCreacionIdx !== -1) {
+    hoja.getRange(filaNum, fechaCreacionIdx + 1).setNumberFormat("@");
+    hoja.getRange(filaNum, fechaCreacionIdx + 1).setValue(fechaCreacion);
+  }
+
+  var pesoIdx = headers.indexOf("Peso");
+  if (pesoIdx !== -1 && data.peso !== "") {
+    hoja.getRange(filaNum, pesoIdx + 1).setNumberFormat("@");
+    hoja.getRange(filaNum, pesoIdx + 1).setValue(String(data.peso).replace(",", "."));
+  }
+
+  return { status: "success", message: "¡Producto registrado con éxito! SKU Asignado: " + skuGenerado, id_producto: idProducto };
+}
+
+function importarMasivoProductos_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var productosActuales = obtenerDatosHoja_("PRODUCTOS");
+  var headers = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
+  
+  var listaItems = data.productos;
+  if (!listaItems || !Array.isArray(listaItems) || listaItems.length === 0) {
+    return { status: "error", message: "No se recibieron productos para importar." };
+  }
+
+  var filasAModificar = [];
+  var consecutivo = productosActuales.length + 1;
+  var fechaCreacion = Utilities.formatDate(new Date(), "America/Bogota", "yyyy-MM-dd");
+
+  for (var i = 0; i < listaItems.length; i++) {
+    var item = listaItems[i];
+    if (!item.nombre || !item.categoria) continue;
+
+    var catPrefijo = String(item.categoria).substring(0, 2).toUpperCase();
+    var skuGenerado = catPrefijo + String(consecutivo).padStart(3, '0');
+    consecutivo++;
+
+    var codigoBarraGenerado = "770" + Math.floor(100000000 + Math.random() * 900000000);
+    var idProducto = "PRD-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+
+    var valorPiedra = !isNaN(item.valor_piedra) && item.valor_piedra !== "" ? Number(item.valor_piedra) : 0;
+    var valorOro = !isNaN(item.valor_oro) && item.valor_oro !== "" ? Number(item.valor_oro) : 0;
+    var valorCompraTotal = valorPiedra + valorOro;
+    
+    var porcentajeVenta = !isNaN(item.porcentaje_venta) && item.porcentaje_venta !== "" ? Number(item.porcentaje_venta) : 100;
+    var tieneDescuento = !isNaN(item.tiene_descuento) && item.tiene_descuento !== "" ? Number(item.tiene_descuento) : 0;
+    var colorItem = item.color || item.ID_Subcategoria || "AMARILLO";
+
+    var nuevaFila = new Array(headers.length);
+    headers.forEach(function(h, index) {
+      if (h === "ID_Producto") nuevaFila[index] = idProducto;
+      else if (h === "SKU" || h === "Ref") nuevaFila[index] = skuGenerado;
+      else if (h === "Codigo_Barra") nuevaFila[index] = codigoBarraGenerado;
+      else if (h === "Nombre") nuevaFila[index] = item.nombre;
+      else if (h === "Descripcion") nuevaFila[index] = "Piedra: " + (item.piedra || "N/A") + " | Color: " + colorItem;
+      else if (h === "ID_Categoria") nuevaFila[index] = item.categoria;
+      else if (h === "Material" || h === "ID_Proveedor" || h === "Material_Oro") nuevaFila[index] = item.material || item.Material_Oro || "";
+      else if (h === "Color" || h === "ID_Subcategoria") nuevaFila[index] = colorItem;
+      else if (h === "ID_Ubicacion") nuevaFila[index] = item.ubicacion || "VITRINA 1";
+      else if (h === "Stock_Min") nuevaFila[index] = 2;
+      else if (h === "Stock_Max") nuevaFila[index] = 50;
+      else if (h === "Estado") nuevaFila[index] = "DISPONIBLE";
+      else if (h === "Fecha_Creacion") nuevaFila[index] = fechaCreacion;
+      else if (h === "Peso") nuevaFila[index] = item.peso !== "" ? String(item.peso).replace(",", ".") : "";
+      else if (h === "Valor_Compra") nuevaFila[index] = valorCompraTotal;
+      else if (h === "Porcentaje_Venta") nuevaFila[index] = porcentajeVenta;
+      else if (h === "Tiene_Descuento") nuevaFila[index] = tieneDescuento;
+      else if (h === "Valor_Piedra") nuevaFila[index] = valorPiedra;
+      else if (h === "Valor_Oro") nuevaFila[index] = valorOro;
+      else if (h === "Foto") nuevaFila[index] = "";
+      else if (nuevaFila[index] === undefined) nuevaFila[index] = "";
+    });
+
+    filasAModificar.push(nuevaFila);
+  }
+
+  if (filasAModificar.length > 0) {
+    var ultimaFilaActual = hoja.getLastRow();
+    var rangoDestino = hoja.getRange(ultimaFilaActual + 1, 1, filasAModificar.length, headers.length);
+    rangoDestino.setValues(filasAModificar);
+
+    var fechaCreacionIdx = headers.indexOf("Fecha_Creacion");
+    if (fechaCreacionIdx !== -1) {
+      hoja.getRange(ultimaFilaActual + 1, fechaCreacionIdx + 1, filasAModificar.length, 1).setNumberFormat("@");
+    }
+    var pesoIdx = headers.indexOf("Peso");
+    if (pesoIdx !== -1) {
+      hoja.getRange(ultimaFilaActual + 1, pesoIdx + 1, filasAModificar.length, 1).setNumberFormat("@");
+    }
+  }
+
+  return { status: "success", message: "¡Se importaron " + filasAModificar.length + " productos con éxito en bloque!" };
+}
+
+function editarProducto_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  
+  var idIdx = headers.indexOf("ID_Producto");
+  var skuIdx = headers.indexOf("SKU");
+  
+  var targetId = String(data.id_producto || "").trim();
+  var targetSku = String(data.sku || "").trim();
+
+  for (var r = 1; r < filas.length; r++) {
+    var currentRowId = idIdx !== -1 ? String(filas[r][idIdx] || "").trim() : "";
+    var currentRowSku = skuIdx !== -1 ? String(filas[r][skuIdx] || "").trim() : "";
+    
+    var coincide = (targetId && currentRowId === targetId) || (targetSku && currentRowSku === targetSku);
+
+    if (coincide) {
+      var filaNum = r + 1;
+      
+      if (headers.indexOf("Nombre") !== -1 && data.nombre !== undefined) hoja.getRange(filaNum, headers.indexOf("Nombre") + 1).setValue(data.nombre);
+      if (headers.indexOf("ID_Categoria") !== -1 && data.categoria !== undefined) hoja.getRange(filaNum, headers.indexOf("ID_Categoria") + 1).setValue(data.categoria);
+      if ((headers.indexOf("Material") !== -1 || headers.indexOf("ID_Proveedor") !== -1) && data.material !== undefined) {
+        var idxMat = headers.indexOf("Material") !== -1 ? headers.indexOf("Material") : headers.indexOf("ID_Proveedor");
+        hoja.getRange(filaNum, idxMat + 1).setValue(data.material);
+      }
+      
+      if ((headers.indexOf("Color") !== -1 || headers.indexOf("ID_Subcategoria") !== -1) && data.color !== undefined) {
+        var idxCol = headers.indexOf("Color") !== -1 ? headers.indexOf("Color") : headers.indexOf("ID_Subcategoria");
+        hoja.getRange(filaNum, idxCol + 1).setValue(data.color);
+      }
+
+      if (headers.indexOf("ID_Ubicacion") !== -1 && data.ubicacion !== undefined) hoja.getRange(filaNum, headers.indexOf("ID_Ubicacion") + 1).setValue(data.ubicacion);
+      
+      var vPiedra = data.valor_piedra !== undefined && data.valor_piedra !== "" ? Number(data.valor_piedra) : null;
+      var vOro = data.valor_oro !== undefined && data.valor_oro !== "" ? Number(data.valor_oro) : null;
+      
+      if (vPiedra !== null && headers.indexOf("Valor_Piedra") !== -1) hoja.getRange(filaNum, headers.indexOf("Valor_Piedra") + 1).setValue(vPiedra);
+      if (vOro !== null && headers.indexOf("Valor_Oro") !== -1) hoja.getRange(filaNum, headers.indexOf("Valor_Oro") + 1).setValue(vOro);
+      
+      if (vPiedra !== null || vOro !== null) {
+        var actualPiedra = headers.indexOf("Valor_Piedra") !== -1 ? Number(hoja.getRange(filaNum, headers.indexOf("Valor_Piedra") + 1).getValue()) || 0 : 0;
+        var actualOro = headers.indexOf("Valor_Oro") !== -1 ? Number(hoja.getRange(filaNum, headers.indexOf("Valor_Oro") + 1).getValue()) || 0 : 0;
+        if (headers.indexOf("Valor_Compra") !== -1) {
+          hoja.getRange(filaNum, headers.indexOf("Valor_Compra") + 1).setValue(actualPiedra + actualOro);
+        }
+      }
+
+      if (headers.indexOf("Porcentaje_Venta") !== -1 && data.porcentaje_venta !== undefined) hoja.getRange(filaNum, headers.indexOf("Porcentaje_Venta") + 1).setValue(data.porcentaje_venta !== "" ? Number(data.porcentaje_venta) : 100);
+      if (headers.indexOf("Tiene_Descuento") !== -1 && data.tiene_descuento !== undefined) hoja.getRange(filaNum, headers.indexOf("Tiene_Descuento") + 1).setValue(data.tiene_descuento !== "" ? Number(data.tiene_descuento) : 0);
+      
+      if (headers.indexOf("Peso") !== -1 && data.peso !== undefined) {
+        var celdaPeso = hoja.getRange(filaNum, headers.indexOf("Peso") + 1);
+        celdaPeso.setNumberFormat("@");
+        celdaPeso.setValue(data.peso !== "" ? String(data.peso).replace(",", ".") : "");
+      }
+      
+      if (headers.indexOf("Foto") !== -1 && data.foto) {
+        hoja.getRange(filaNum, headers.indexOf("Foto") + 1).setValue(data.foto);
+      }
+
+      return { status: "success", message: "¡Producto actualizado correctamente!" };
+    }
+  }
+  return { status: "error", message: "Producto no encontrado para editar." };
+}
+
+function eliminarProducto_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  
+  var skuIdx = headers.indexOf("SKU");
+  var targetSku = String(data.sku || "").trim();
+
+  for (var r = 1; r < filas.length; r++) {
+    var currentRowSku = skuIdx !== -1 ? String(filas[r][skuIdx] || "").trim() : "";
+    if (currentRowSku === targetSku) {
+      hoja.deleteRow(r + 1);
+      return { status: "success", message: "¡Producto eliminado correctamente!" };
+    }
+  }
+  return { status: "error", message: "Producto no encontrado para eliminar." };
+}
+
+function eliminarMasivoProductos_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("PRODUCTOS");
+  var skusAEliminar = data.skus;
+  
+  if (!skusAEliminar || !Array.isArray(skusAEliminar) || skusAEliminar.length === 0) {
+    return { status: "error", message: "No se seleccionaron productos para eliminar." };
+  }
+
+  var filas = hoja.getDataRange().getValues();
+  var headers = filas[0];
+  var skuIdx = headers.indexOf("SKU");
+  if (skuIdx === -1) return { status: "error", message: "Columna SKU no encontrada en la hoja." };
+
+  var skusSet = {};
+  skusAEliminar.forEach(function(s) { skusSet[String(s).trim()] = true; });
+
+  var eliminadosCount = 0;
+  for (var r = filas.length - 1; r >= 1; r--) {
+    var rowSku = String(filas[r][skuIdx] || "").trim();
+    if (skusSet[rowSku]) {
+      hoja.deleteRow(r + 1);
+      eliminadosCount++;
+    }
+  }
+
+  return { status: "success", message: "¡Se eliminaron " + eliminadosCount + " productos exitosamente!" };
+}
+
+function obtenerDatosHoja_(nombreHoja) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName(nombreHoja);
+  if (!hoja || hoja.getLastRow() <= 1) return [];
+  
+  var rango = hoja.getDataRange().getValues();
+  var headers = rango[0];
+  var rows = rango.slice(1);
+  
+  return rows.map(function(row) {
+    var obj = {};
+    headers.forEach(function(header, i) {
+      var val = row[i];
+      if (val instanceof Date) {
+        obj[header] = Utilities.formatDate(val, "America/Bogota", "yyyy-MM-dd");
+      } else {
+        if (header.toLowerCase() === "peso" && val !== null && val !== undefined) {
+          obj[header] = String(val).replace(",", ".");
+        } else {
+          obj[header] = val !== undefined ? val : "";
+        }
+      }
+    });
+    if (!obj["Color"] && obj["ID_Subcategoria"]) {
+      obj["Color"] = obj["ID_Subcategoria"];
+    }
+    return obj;
+  });
+}
+```[cite: 4]
+
+---
+
+### 3. Código Completo: `dashboard.html` (Panel de Control y Gestión)
+*Interfaz completa para la administración del inventario, control de roles, generación independiente de códigos QR (vinculados al certificado digital en GitHub Pages) y códigos de barras[cite: 5].*
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MANU JOYEROS</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Librería JsBarcode para generar códigos de barras visuales -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        .sidebar { display: flex; flex-direction: column; height: 100vh; position: fixed; top: 0; left: 0; width: 260px; transform: translateX(-100%); transition: transform 0.3s ease-in-out; z-index: 1000; }
+        .sidebar.active { transform: translateX(0); }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); z-index: 999; }
+        .sidebar-overlay.active { display: block; }
+        .sidebar-header { background-color: #0f172a; padding: 1rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-logo-container { background-color: #ffffff; padding: 6px; border-radius: 8px; display: inline-block; width: 100%; max-width: 180px; margin: 0 auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .sidebar-logo-img { width: 100%; height: auto; display: block; object-fit: contain; }
+        .sidebar-nav { flex: 1; overflow-y: auto; }
+        .sidebar-footer-version { padding: 1rem; text-align: center; font-size: 0.7rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); background-color: #0b0f19; }
+        .main-content { flex: 1; display: flex; flex-direction: column; width: 100%; overflow: hidden; }
+        .top-bar { background: #ffffff; padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .menu-toggle { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #0f172a; }
+        .content-body { padding: 1rem; overflow-y: auto; flex: 1; }
+        .table-container { overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+        .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .data-table th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        
+        button.is-loading { opacity: 0.5 !important; pointer-events: none !important; }
+
+        .btn-nuevo-producto {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: none;
+            padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.78rem; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15); transition: all 0.2s ease;
+        }
+        .btn-nuevo-producto:hover { transform: translateY(-1px); background: linear-gradient(135deg, #1e293b 100%, #334155 100%); }
+
+        .btn-action-container { display: flex; gap: 5px; align-items: center; }
+        .btn-action {
+            width: 30px; height: 30px; border: 1.5px solid; border-radius: 6px; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; background-color: #f8fafc;
+        }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-edit { border-color: #3b82f6; color: #3b82f6; }
+        .btn-edit:hover { background-color: #eff6ff; }
+        .btn-delete { border-color: #ef4444; color: #ef4444; }
+        .btn-delete:hover { background-color: #fef2f2; }
+        .btn-qr { border-color: #10b981; color: #10b981; }
+        .btn-qr:hover { background-color: #ecfdf5; }
+
+        .img-thumbnail-container { display: inline-block; cursor: pointer; }
+        .img-thumbnail-container img {
+            width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .img-thumbnail-container:hover img { transform: scale(1.08); border-color: #3b82f6; }
+
+        .image-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.92); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; padding: 20px;
+        }
+        .image-modal.active { display: flex; }
+        .image-modal-content {
+            width: auto; height: auto; max-width: 90vw; max-height: 82vh; object-fit: contain;
+            border-radius: 12px; border: 4px solid #ffffff; box-shadow: 0 20px 50px rgba(0,0,0,0.7); background: #1e293b;
+        }
+        .image-modal-close {
+            margin-top: 20px; background: #ef4444; color: white; border: none; padding: 10px 30px;
+            font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: background 0.2s;
+        }
+        .image-modal-close:hover { background: #dc2626; }
+
+        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 1.5rem; }
+        .btn-form-save {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: none;
+            padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2); transition: all 0.2s ease;
+        }
+        .btn-form-save:hover { transform: translateY(-1px); }
+        .btn-form-update {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff; border: none;
+            padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer;
+            box-shadow: 0 3px 8px rgba(217, 119, 6, 0.2); transition: all 0.2s ease;
+        }
+        .btn-form-update:hover { transform: translateY(-1px); }
+        .btn-form-cancel {
+            background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 24px;
+            border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;
+        }
+        .btn-form-cancel:hover { background-color: #e2e8f0; color: #0f172a; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+        @media (min-width: 768px) {
+            .sidebar { transform: translateX(0); position: relative; }
+            .sidebar-overlay { display: none !important; }
+            .main-content { margin-left: 0; }
+            .menu-toggle { display: none; }
+            .content-body { padding: 2rem; }
+            .form-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        }
+        select, input[type="text"], input[type="password"], input[type="number"], input[type="file"], input[type="date"] {
+            width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;
+            background-color: #fff; outline: none; transition: border-color 0.2s;
+        }
+        select:focus, input:focus { border-color: #3b82f6; }
+
+        .catalog-toolbar { display: flex; align-items: center; gap: 8px; margin-top: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .btn-discreet-refresh {
+            width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; border: 1.5px solid #cbd5e1;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s ease;
+        }
+        .btn-discreet-refresh:hover { background: #e2e8f0; border-color: #94a3b8; transform: rotate(180deg); }
+
+        .search-expandable-box {
+            display: flex; align-items: center; background: #ffffff; border: 1.5px solid #cbd5e1;
+            border-radius: 30px; padding: 2px 4px; width: 32px; height: 32px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
+        }
+        .search-expandable-box.expanded { width: 280px; background: #f8fafc; border-color: #3b82f6; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15); cursor: default; }
+        .search-expandable-icon { min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background: transparent; border: none; cursor: pointer; }
+        .search-expandable-input { border: none; background: transparent; outline: none; font-size: 0.82rem; width: 100%; padding-left: 4px; opacity: 0; transition: opacity 0.2s ease; }
+        .search-expandable-box.expanded .search-expandable-input { opacity: 1; }
+
+        .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem; padding: 8px 0; font-size: 0.88rem; color: #475569; }
+        .pagination-container.top-pagination { border-bottom: 1px solid #e2e8f0; border-top: none; }
+        .pagination-container.bottom-pagination { border-top: 1px solid #e2e8f0; border-bottom: none; }
+        .pagination-buttons { display: flex; gap: 8px; align-items: center; }
+        .btn-page { background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #1e293b; transition: background 0.2s; }
+        .btn-page:hover:not(:disabled) { background: #e2e8f0; }
+        .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Estilos de Impresión independientes por sección */
+        @media print {
+            body * { visibility: hidden; }
+            .print-active, .print-active * { visibility: visible; }
+            .print-active {
+                position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 5px; border: none !important; box-shadow: none !important; background: white !important;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="app-body">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="image-modal" id="imageModal" onclick="cerrarZoomImagen()">
+        <img class="image-modal-content" id="imgModalSrc">
+        <button class="image-modal-close" onclick="cerrarZoomImagen()">Cerrar ✕</button>
+    </div>
+
+    <!-- Modal Separado: QR con enlace a GitHub Pages (cert.html) y Código de Barras independiente -->
+    <div class="image-modal" id="modalQrBarra" onclick="cerrarModalQr()">
+        <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; max-width: 360px; width: 90%; color: #0f172a;" onclick="event.stopPropagation()">
+            
+            <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; letter-spacing: 1px; margin-bottom: 2px;">MANU JOYEROS</div>
+            
+            <!-- ETIQUETA QR INDEPENDIENTE (APUNTA AL CERTIFICADO EN GITHUB PAGES) -->
+            <div id="printSectionQr" style="background: #fff; padding: 10px; border: 1.5px dashed #cbd5e1; border-radius: 8px; margin-bottom: 12px;">
+                <div id="modalSkuLabel" style="font-size: 0.95rem; font-weight: bold; color: #0f172a; margin-bottom: 6px;">SKU: AN001</div>
+                
+                <div style="display: inline-block; background: #f8fafc; padding: 4px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 4px;">
+                    <img id="imgQrGenerado" src="" alt="Código QR Certificado" crossorigin="anonymous" style="width: 130px; height: 130px; display: block; margin: 0 auto;">
+                </div>
+                
+                <div id="modalDescLabel" style="font-size: 0.72rem; color: #475569; margin-top: 4px; line-height: 1.2; padding: 0 5px;">Escanee para ver certificado digital</div>
+
+                <div class="no-print" style="margin-top: 6px;">
+                    <button type="button" class="btn-form-update" style="padding: 4px 12px; font-size: 0.78rem;" onclick="imprimirSeccion('printSectionQr')">🖨️ Imprimir QR</button>
+                    <button type="button" class="btn-form-save" style="padding: 4px 12px; font-size: 0.78rem; margin-left: 5px; background: #0f172a;" onclick="descargarQrPNG()">📥 Descargar QR</button>
+                </div>
+            </div>
+
+            <!-- ETIQUETA CÓDIGO DE BARRAS INDEPENDIENTE -->
+            <div id="printSectionBarcode" style="background: #fff; padding: 10px; border: 1.5px dashed #cbd5e1; border-radius: 8px; margin-bottom: 12px;">
+                <div id="modalSkuBarcodeLabel" style="font-size: 0.85rem; font-weight: bold; color: #0f172a; margin-bottom: 4px;">SKU: AN001</div>
+                <div style="background: #fff; padding: 4px; display: inline-block;">
+                    <svg id="barcodeSvg" style="max-width: 100%; height: 45px; display: block; margin: 0 auto;"></svg>
+                </div>
+                <div class="no-print" style="margin-top: 6px;">
+                    <button type="button" class="btn-form-update" style="padding: 4px 12px; font-size: 0.78rem;" onclick="imprimirSeccion('printSectionBarcode')">🖨️ Imprimir Código de Barras</button>
+                    <button type="button" class="btn-form-save" style="padding: 4px 12px; font-size: 0.78rem; margin-left: 5px; background: #059669;" onclick="descargarBarcodePNG()">📥 Descargar Barras</button>
+                </div>
+            </div>
+
+            <button class="image-modal-close no-print" style="margin-top: 0; padding: 6px 20px; font-size: 0.85rem;" onclick="cerrarModalQr()">Cerrar Ventana</button>
+        </div>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo-container">
+                <img src="manu_joyeros.jpg" alt="MANU JOYEROS" class="sidebar-logo-img">
+            </div>
+            <div style="margin-top: 8px;">
+                <span id="userRoleBadge" class="badge">Rol</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNavContainer">
+            <a href="#" class="nav-link active" onclick="cambiarVista('dashboard', event)">📊 Dashboard</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('productos', event)">💍 Productos</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('inventario', event)">📦 Inventario</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('actualizacion_oro', event)">🪙 Actualización Oro</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('entradas', event)">📥 Entradas</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('salidas', event)">📤 Salidas</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('kardex', event)">📑 Kardex</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('proveedores', event)">🏢 Proveedores</a>
+            <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('usuarios', event)">👤 Usuarios</a>
+            <a href="#" class="nav-link" onclick="cambiarVista('cambiar_password', event)">🔑 Cambiar Contraseña</a>
+            <a href="#" class="nav-link text-danger" onclick="cerrarSesion()">🚪 Cerrar Sesión</a>
+        </nav>
+        <div class="sidebar-footer-version" id="versionSidebarLabel">MANU JOYEROS</div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 id="viewTitle" style="font-size: 1.25rem;">Dashboard General</h1>
+            <div class="user-info" style="font-size: 0.9rem;">
+                <span id="userNameLabel">Usuario</span>
+            </div>
+        </header>
+
+        <div class="content-body" id="contentBody">
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
+                    <p>Sistema profesional de inventario y control de alta joyería — <em>¡Joyas que trascienden el tiempo!</em></p>
+                </div>
+                <div class="welcome-date" id="currentDateLabel" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+    </main>
+
+    <button class="floating-scanner-btn" onclick="abrirEscaner()" title="Escanear Código de Barras">📷</button>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        let usuarioActual = null;
+        let fotoBase64Temporal = "";
+        let listaProductosCache = [];
+        let listaProductosFiltradosCache = [];
+        let paginaActual = 1;
+        const registrosPorPagina = 20;
+
+        let listaCategoriasCache = ["ANILLOS", "CADENAS", "ARETES", "DIJES", "PULSERAS", "ESTUCHES"];
+        let listaMaterialesCache = ["ORO"];
+        let listaColoresCache = ["AMARILLO", "ROJO", "BLANCO", "COMBINADO"];
+        let valorOroDelDiaCache = 250000;
+
+        document.addEventListener("click", function(e) {
+            const btn = e.target.closest("button");
+            if (btn && (btn.type === "submit" || btn.classList.contains("btn-action"))) {
+                if (!btn.classList.contains("is-loading")) {
+                    btn.classList.add("is-loading");
+                    setTimeout(() => { btn.classList.remove("is-loading"); }, 2000);
+                }
+            }
+
+            const searchBox = document.getElementById("searchExpandableBox");
+            if (searchBox && !searchBox.contains(e.target)) {
+                const input = document.getElementById("inputBuscadorCatalogo");
+                if (input && input.value.trim() === "") {
+                    searchBox.classList.remove("expanded");
+                }
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const usuarioGuardado = localStorage.getItem("usuario_manu");
+            if (!usuarioGuardado) { window.location.href = "login.html"; return; }
+            usuarioActual = JSON.parse(usuarioGuardado);
+            document.getElementById("userNameLabel").textContent = usuarioActual.nombre;
+            document.getElementById("userNameBanner").textContent = usuarioActual.nombre;
+            document.getElementById("userRoleBadge").textContent = usuarioActual.rol;
+
+            // Ocultar módulos del menú si es empleado
+            const rolUpper = (usuarioActual.rol || "").toUpperCase();
+            if (rolUpper !== 'ADMIN' && rolUpper !== 'ADMINISTRADOR') {
+                document.querySelectorAll(".nav-admin-only").forEach(el => el.style.display = 'none');
+            }
+
+            if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
+                document.getElementById("versionSidebarLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
+            }
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById("currentDateLabel").textContent = new Date().toLocaleDateString('es-CO', options);
+
+            await cargarCategoriasDinamicas();
+            await cargarMaterialesDinamicos();
+            await cargarColoresDinamicos();
+            await cargarValorOroDia();
+        });
+
+        async function cargarCategoriasDinamicas() {
+            try {
+                const res = await API.llamar("obtenerCategorias", {}, "GET");
+                if (res && res.status === "success" && res.categorias) {
+                    listaCategoriasCache = res.categorias;
+                }
+            } catch (e) {}
+            return listaCategoriasCache;
+        }
+
+        async function cargarMaterialesDinamicos() {
+            try {
+                const res = await API.llamar("obtenerMateriales", {}, "GET");
+                if (res && res.status === "success" && res.materiales) {
+                    listaMaterialesCache = res.materiales;
+                }
+            } catch (e) {}
+            return listaMaterialesCache;
+        }
+
+        async function cargarColoresDinamicos() {
+            try {
+                const res = await API.llamar("obtenerColores", {}, "GET");
+                if (res && res.status === "success" && res.colores) {
+                    listaColoresCache = res.colores;
+                }
+            } catch (e) {}
+            return listaColoresCache;
+        }
+
+        async function cargarValorOroDia() {
+            try {
+                const res = await API.llamar("obtenerValorOroDia", {}, "GET");
+                if (res && res.status === "success" && res.valor_oro_dia) {
+                    valorOroDelDiaCache = Number(res.valor_oro_dia);
+                }
+            } catch (e) {}
+            return valorOroDelDiaCache;
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem("usuario_manu");
+            window.location.href = "login.html";
+        }
+
+        function toggleSidebar() {
+            document.getElementById("sidebar").classList.toggle("active");
+            document.getElementById("sidebarOverlay").classList.toggle("active");
+        }
+
+        function cambiarVista(vista, event) {
+            if (event) {
+                document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+                event.target.classList.add("active");
+                document.getElementById("viewTitle").textContent = event.target.textContent.trim().substring(2);
+            }
+            if (window.innerWidth < 768) { toggleSidebar(); }
+
+            const content = document.getElementById("contentBody");
+            if(vista === 'dashboard') { location.reload(); }
+            else if(vista === 'productos' || vista === 'inventario') { renderizarModuloProductos(content); }
+            else if(vista === 'actualizacion_oro') { renderizarModuloActualizacionOro(content); }
+            else if(vista === 'usuarios') { renderizarModuloUsuarios(content); }
+            else if(vista === 'cambiar_password') { renderizarModuloCambiarPassword(content); }
+            else {
+                content.innerHTML = `<div class="card"><h3>Módulo de ${vista.toUpperCase()}</h3><p>Módulo configurado en la arquitectura del sistema.</p></div>`;
+            }
+        }
+
+        function renderizarModuloActualizacionOro(container) {
+            container.innerHTML = `
+                <div class="card" style="max-width: 550px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 0.5rem; color: #0f172a;">🪙 Actualización del Valor del Oro del Día</h3>
+                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;">Este valor se utilizará como base para multiplicar automáticamente por los gramos de cada pieza al cotizar joyas.</p>
+                    
+                    <form id="formOroDia" onsubmit="ejecutarActualizacionOro(event)">
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 6px;">Valor del Gramo de Oro Actual ($ COP) *</label>
+                            <input type="number" id="inputValorOroDiaModal" required style="font-size: 1.25rem; font-weight: bold; color: #d97706;" value="${valorOroDelDiaCache}">
+                        </div>
+                        <button type="submit" class="btn-form-save" style="width: 100%; padding: 12px; font-size: 1rem;">💾 Guardar y Actualizar Valor del Oro</button>
+                    </form>
+                </div>`;
+        }
+
+        async function ejecutarActualizacionOro(event) {
+            event.preventDefault();
+            const nuevoValor = Number(document.getElementById("inputValorOroDiaModal").value);
+            if (isNaN(nuevoValor) || nuevoValor <= 0) {
+                alert("Por favor ingrese un valor válido.");
+                return;
+            }
+
+            const res = await API.llamar("actualizarValorOroDia", { action: "actualizarValorOroDia", valor_oro_dia: nuevoValor }, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                valorOroDelDiaCache = nuevoValor;
+            } else {
+                alert("Error al actualizar: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        function renderizarModuloCambiarPassword(container) {
+            container.innerHTML = `
+                <div class="card" style="max-width: 500px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #0f172a;">🔑 Cambiar Contraseña</h3>
+                    <form id="formCambiarPass" onsubmit="ejecutarCambioPassword(event)">
+                        <div class="form-group" style="margin-bottom: 1rem;"><label>Contraseña Actual *</label><input type="password" id="passActual" required placeholder="••••••••"></div>
+                        <div class="form-group" style="margin-bottom: 1rem;"><label>Nueva Contraseña *</label><input type="password" id="passNueva" required placeholder="••••••••"></div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;"><label>Confirmar Nueva Contraseña *</label><input type="password" id="passConfirmar" required placeholder="••••••••"></div>
+                        <button type="submit" class="btn-form-save" style="width: 100%;">Actualizar Contraseña</button>
+                    </form>
+                </div>`;
+        }
+
+        async function ejecutarCambioPassword(event) {
+            event.preventDefault();
+            const passwordActual = document.getElementById("passActual").value.trim();
+            const passwordNueva = document.getElementById("passNueva").value.trim();
+            const passwordConfirmar = document.getElementById("passConfirmar").value.trim();
+
+            if (passwordNueva !== passwordConfirmar) { alert("Las nuevas contraseñas no coinciden."); return; }
+
+            const res = await API.llamar("cambiarPassword", { action: "cambiarPassword", usuario: usuarioActual.usuario, password_actual: passwordActual, password_nueva: passwordNueva }, "POST");
+            if (res && res.status === "success") { alert(res.message); document.getElementById("formCambiarPass").reset(); }
+            else { alert("Error: " + (res ? res.message : "No se pudo actualizar.")); }
+        }
+
+        async function renderizarModuloUsuarios(container) {
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+            let botonNuevoUsuarioHtml = esAdmin ? `<button class="btn-nuevo-producto" onclick="abrirFormularioNuevoUsuario()">👤 + Nuevo Usuario</button>` : '';
+
+            container.innerHTML = `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #0f172a; margin: 0;">👤 Gestión de Usuarios y Accesos</h3>
+                        ${botonNuevoUsuarioHtml}
+                    </div>
+                    <div id="vistaUsuariosInterna">Cargando usuarios...</div>
+                </div>`;
+            
+            const res = await API.llamar("obtenerUsuarios", {}, "GET");
+            const contenedor = document.getElementById("vistaUsuariosInterna");
+            if (res && res.status === "success") {
+                const usuarios = res.data;
+                let html = `<div class="table-container"><table class="data-table"><thead><tr>
+                    <th>Usuario</th><th>Nombre</th><th>Rol</th><th>Fecha Vencimiento</th><th>Estado</th>`;
+                if (esAdmin) html += `<th>Acciones</th>`;
+                html += `</tr></thead><tbody>`;
+
+                usuarios.forEach(u => {
+                    let fechaVenc = u.Fecha_Vencimiento || u.fecha_vencimiento || u.Vencimiento || '-';
+                    if (fechaVenc !== '-') fechaVenc = String(fechaVenc).split('T')[0];
+
+                    let estadoVal = u.Estado || u.estado || 'ACTIVO';
+                    let estadoBadge = estadoVal.toUpperCase() === 'ACTIVO' ? 
+                        `<span class="badge" style="background-color: #10b981;">Activo</span>` : 
+                        `<span class="badge" style="background-color: #ef4444;">Inactivo</span>`;
+
+                    html += `<tr>
+                        <td><strong>${u.Usuario || u.usuario || '-'}</strong></td>
+                        <td>${u.Nombre || u.nombre || '-'}</td>
+                        <td><span class="badge" style="background-color: #0f172a;">${u.Rol || u.rol || '-'}</span></td>
+                        <td>${fechaVenc}</td>
+                        <td>${estadoBadge}</td>`;
+
+                    if (esAdmin) {
+                        let userJson = encodeURIComponent(JSON.stringify(u));
+                        html += `<td><div class="btn-action-container">
+                            <button class="btn-action btn-edit" onclick="abrirFormularioEditarUsuario('${userJson}')" title="Editar Usuario">✏️</button>
+                            <button class="btn-action btn-delete" onclick="eliminarUsuario('${u.Usuario || u.usuario}')" title="Eliminar Usuario">🗑️</button>
+                        </div></td>`;
+                    }
+
+                    html += `</tr>`;
+                });
+                html += `</tbody></table></div>`;
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = `<p style="color: #ef4444;">Error al cargar los usuarios del sistema.</p>`;
+            }
+        }
+
+        function abrirFormularioNuevoUsuario() {
+            document.getElementById("vistaUsuariosInterna").innerHTML = `
+                <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nuevo Usuario</h4>
+                    <form id="formNuevoUsuario" onsubmit="guardarNuevoUsuario(event)">
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-group"><label>Nombre de Usuario (Login) *</label><input type="text" id="nuevoUsu" required placeholder="Ej: ccorredor"></div>
+                            <div class="form-group"><label>Nombre Completo *</label><input type="text" id="nuevoNombre" required placeholder="Ej: Carlos Corredor"></div>
+                            <div class="form-group"><label>Contraseña *</label><input type="password" id="nuevoPass" required placeholder="••••••••"></div>
+                            <div class="form-group"><label>Rol *</label><select id="nuevoRol" required>
+                                <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+                                <option value="VENDEDOR">VENDEDOR</option>
+                            </select></div>
+                            <div class="form-group"><label>Fecha de Vencimiento de Acceso *</label><input type="date" id="nuevoVenc" required></div>
+                            <div class="form-group"><label>Estado *</label><select id="nuevoEstado" required>
+                                <option value="ACTIVO">ACTIVO</option>
+                                <option value="INACTIVO">INACTIVO</option>
+                            </select></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="renderizarModuloUsuarios(document.getElementById('contentBody'))">Cancelar</button>
+                            <button type="submit" class="btn-form-save">Guardar Usuario</button>
+                        </div>
+                    </form>
+                </div>`;
+        }
+
+        async function guardarNuevoUsuario(event) {
+            event.preventDefault();
+            const data = {
+                action: "crearUsuario",
+                usuario: document.getElementById("nuevoUsu").value.trim(),
+                nombre: document.getElementById("nuevoNombre").value.trim(),
+                password: document.getElementById("nuevoPass").value.trim(),
+                rol: document.getElementById("nuevoRol").value,
+                fecha_vencimiento: document.getElementById("nuevoVenc").value,
+                estado: document.getElementById("nuevoEstado").value
+            };
+
+            const res = await API.llamar("crearUsuario", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                renderizarModuloUsuarios(document.getElementById('contentBody'));
+            } else {
+                alert("Error: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        function abrirFormularioEditarUsuario(userJson) {
+            const u = JSON.parse(decodeURIComponent(userJson));
+            let fechaVencLimpia = u.Fecha_Vencimiento || u.fecha_vencimiento || u.Vencimiento || '';
+            if (fechaVencLimpia) fechaVencLimpia = String(fechaVencLimpia).split('T')[0];
+
+            let rolActual = (u.Rol || u.rol || 'VENDEDOR').toUpperCase();
+            let estadoActual = (u.Estado || u.estado || 'ACTIVO').toUpperCase();
+            let usuarioId = u.Usuario || u.usuario;
+
+            document.getElementById("vistaUsuariosInterna").innerHTML = `
+                <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Editar Usuario [${usuarioId}]</h4>
+                    <form id="formEditarUsuario" onsubmit="actualizarUsuario(event, '${usuarioId}')">
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-group"><label>Nombre Completo *</label><input type="text" id="editUsuNombre" required value="${u.Nombre || u.nombre || ''}"></div>
+                            <div class="form-group"><label>Nueva Contraseña (Dejar en blanco para no cambiar)</label><input type="password" id="editUsuPass" placeholder="••••••••"></div>
+                            <div class="form-group"><label>Rol *</label><select id="editUsuRol" required>
+                                <option value="ADMINISTRADOR" ${rolActual === 'ADMINISTRADOR' ? 'selected' : ''}>ADMINISTRADOR</option>
+                                <option value="VENDEDOR" ${rolActual === 'VENDEDOR' ? 'selected' : ''}>VENDEDOR</option>
+                            </select></div>
+                            <div class="form-group"><label>Fecha de Vencimiento de Acceso *</label><input type="date" id="editUsuVenc" required value="${fechaVencLimpia}"></div>
+                            <div class="form-group"><label>Estado *</label><select id="editUsuEstado" required>
+                                <option value="ACTIVO" ${estadoActual === 'ACTIVO' ? 'selected' : ''}>ACTIVO</option>
+                                <option value="INACTIVO" ${estadoActual === 'INACTIVO' ? 'selected' : ''}>INACTIVO</option>
+                            </select></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="renderizarModuloUsuarios(document.getElementById('contentBody'))">Cancelar</button>
+                            <button type="submit" class="btn-form-update">Actualizar Usuario</button>
+                        </div>
+                    </form>
+                </div>`;
+        }
+
+        async function actualizarUsuario(event, usuarioId) {
+            event.preventDefault();
+            const data = {
+                action: "editarUsuario",
+                usuario_original: usuarioId,
+                nombre: document.getElementById("editUsuNombre").value.trim(),
+                password: document.getElementById("editUsuPass").value.trim(),
+                rol: document.getElementById("editUsuRol").value,
+                fecha_vencimiento: document.getElementById("editUsuVenc").value,
+                estado: document.getElementById("editUsuEstado").value
+            };
+
+            const res = await API.llamar("editarUsuario", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                renderizarModuloUsuarios(document.getElementById('contentBody'));
+            } else {
+                alert("Error al actualizar: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        async function eliminarUsuario(usuarioId) {
+            if (usuarioId.toLowerCase() === usuarioActual.usuario.toLowerCase()) {
+                alert("No puedes eliminar tu propio usuario activo.");
+                return;
+            }
+            if (!confirm(`¿Está seguro de eliminar al usuario [${usuarioId}]?`)) return;
+
+            const res = await API.llamar("eliminarUsuario", { action: "eliminarUsuario", usuario: usuarioId }, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                renderizarModuloUsuarios(document.getElementById('contentBody'));
+            } else {
+                alert("Error al eliminar usuario.");
+            }
+        }
+
+        async function renderizarModuloProductos(container) {
+            await cargarCategoriasDinamicas();
+            await cargarMaterialesDinamicos();
+            await cargarColoresDinamicos();
+            await cargarValorOroDia();
+
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+            let botonesAccionHtml = esAdmin ? `
+                <button class="btn-nuevo-producto" onclick="abrirFormularioNuevoProducto()">✨ + Nuevo</button>
+                <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);" onclick="abrirModalImportarCSV()">📂 Importar CSV</button>
+                <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="exportarCatalogoCSV()">📥 Exportar Todo</button>
+                <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" onclick="eliminarProductosSeleccionados()">🗑️ Eliminar</button>
+            ` : '';
+
+            container.innerHTML = `
+                <div class="card">
+                    <h3 style="color: #0f172a; margin-bottom: 0.5rem;">Catálogo de Productos y Joyas</h3>
+                    
+                    <div class="catalog-toolbar">
+                        ${botonesAccionHtml}
+                        <button class="btn-discreet-refresh" onclick="forzarRecargaCatalogo()" title="Actualizar Datos">🔄</button>
+                        <div class="search-expandable-box" id="searchExpandableBox" onclick="expandirBuscador()">
+                            <button type="button" class="search-expandable-icon" title="Buscar en catálogo">🔍</button>
+                            <input type="text" id="inputBuscadorCatalogo" class="search-expandable-input" placeholder="Buscar por SKU, Nombre, Código, Material, Color, Ubicación..." oninput="filtrarCatalogoEnVivo()">
+                        </div>
+                    </div>
+
+                    <div id="vistaProductosInterna"><p style="text-align: center; color: #64748b; padding: 2rem;">Cargando inventario...</p></div>
+                </div>`;
+            await cargarListaProductos(false);
+        }
+
+        function exportarCatalogoCSV() {
+            if (!listaProductosFiltradosCache || listaProductosFiltradosCache.length === 0) {
+                alert("No hay datos para exportar.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "SKU;Nombre;Categoria;Color;Material;Peso;Valor_Oro;Valor_Piedra;Porcentaje_Venta;Tiene_Descuento;Ubicacion;Codigo_Barra\n";
+
+            listaProductosFiltradosCache.forEach(p => {
+                let sku = p.SKU || "";
+                let nombre = `"${(p.Nombre || "").replace(/"/g, '""')}"`;
+                let cat = p.ID_Categoria || "";
+                let color = p.Color || p.ID_Subcategoria || "";
+                let mat = p.Material_Oro || p.Material || p.material || p.ID_Proveedor || "";
+                let peso = p.Peso || p.peso || "0";
+                let vOro = p.Valor_Oro || "0";
+                let vPiedra = p.Valor_Piedra || "0";
+                let margen = p.Porcentaje_Venta || "100";
+                let desc = p.Tiene_Descuento || "0";
+                let ubicacion = p.ID_Ubicacion || "";
+                let codigoBarra = p.Codigo_Barra || "";
+
+                csvContent += [sku, nombre, cat, color, mat, peso, vOro, vPiedra, margen, desc, ubicacion, codigoBarra].join(";") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "catalogo_manu_joyeros_exportado.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function abrirModalImportarCSV() {
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = e => {
+                let archivo = e.target.files[0];
+                let lector = new FileReader();
+                lector.onload = async function(event) {
+                    let texto = event.target.result;
+                    let lineas = texto.split(/\r\n|\n/);
+                    let productosArray = [];
+
+                    for (let i = 1; i < lineas.length; i++) {
+                        let linea = lineas[i].trim();
+                        if (!linea) continue;
+                        let cols = linea.split(';');
+                        if (cols.length >= 2) {
+                            let matCSV = cols[2] ? cols[2].replace(/"/g, '').trim() : 'ORO';
+                            let piedraCSV = cols[3] ? cols[3].trim() : '';
+                            let colorCSV = cols[4] ? cols[4].trim() : 'AMARILLO';
+                            let pesoCSV = cols[5] && cols[5].trim() !== "" ? cols[5].trim() : '0';
+                            
+                            let limpiarValor = (val) => {
+                                if (!val) return 0;
+                                let s = String(val).replace(/\$/g, '').replace(/\./g, '').replace(/,/g, '.').trim();
+                                return parseFloat(s) || 0;
+                            };
+
+                            let valOroCSV = limpiarValor(cols[6]);
+                            let valPiedraCSV = limpiarValor(cols[7]);
+                            let costoTotalCSV = valOroCSV + valPiedraCSV;
+
+                            productosArray.push({
+                                nombre: cols[0] ? cols[0].replace(/"/g, '').trim() : '',
+                                categoria: cols[1] ? cols[1].trim() : 'ANILLOS',
+                                material: matCSV,
+                                Material_Oro: matCSV,
+                                Material: matCSV,
+                                ID_Proveedor: matCSV,
+                                piedra: piedraCSV,
+                                color: colorCSV,
+                                ID_Subcategoria: colorCSV,
+                                peso: pesoCSV,
+                                valor_oro: valOroCSV,
+                                valor_piedra: valPiedraCSV,
+                                valor_compra: costoTotalCSV,
+                                porcentaje_venta: cols[8] && cols[8].trim() !== "" ? parseFloat(cols[8]) || 100 : 100,
+                                tiene_descuento: cols[9] && cols[9].trim() !== "" ? parseFloat(cols[9]) || 0 : 0,
+                                ubicacion: cols[10] ? cols[10].trim() : 'VITRINA 1'
+                            });
+                        }
+                    }
+
+                    if (productosArray.length === 0) {
+                        alert("El archivo CSV no contiene registros válidos.");
+                        return;
+                    }
+
+                    if (confirm(`Se detectaron ${productosArray.length} productos. ¿Desea importarlos masivamente de inmediato?`)) {
+                        const contenedorInterno = document.getElementById("vistaProductosInterna");
+                        contenedorInterno.innerHTML = `<div style="text-align: center; padding: 3rem;"><h3 style="color: #3b82f6;">⏳ Importando ${productosArray.length} productos de forma masiva... Por favor espere.</h3></div>`;
+
+                        const res = await API.llamar("importarMasivoProductos", { action: "importarMasivoProductos", productos: productosArray }, "POST");
+                        if (res && res.status === "success") {
+                            alert(res.message);
+                            localStorage.removeItem("cache_productos_manu");
+                            renderizarModuloProductos(document.getElementById('contentBody'));
+                        } else {
+                            alert("Error en la importación: " + (res ? res.message : "Desconocido"));
+                            renderizarModuloProductos(document.getElementById('contentBody'));
+                        }
+                    }
+                };
+                lector.readAsText(archivo, 'ISO-8859-1');
+            };
+            input.click();
+        }
+
+        function seleccionarTodosCheckboxes(source) {
+            const checkboxes = document.querySelectorAll('.sku-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
+        async function eliminarProductosSeleccionados() {
+            const checkboxes = document.querySelectorAll('.sku-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert("Por favor seleccione al menos un producto para eliminar.");
+                return;
+            }
+
+            if (!confirm(`¿Está seguro de eliminar los ${checkboxes.length} productos seleccionados?`)) return;
+
+            let skusAEliminar = Array.from(checkboxes).map(cb => cb.value);
+
+            const res = await API.llamar("eliminarMasivoProductos", { action: "eliminarMasivoProductos", skus: skusAEliminar }, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                localStorage.removeItem("cache_productos_manu");
+                renderizarModuloProductos(document.getElementById('contentBody'));
+            } else {
+                alert("Error al eliminar: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        function expandirBuscador() {
+            const box = document.getElementById("searchExpandableBox");
+            box.classList.add("expanded");
+            document.getElementById("inputBuscadorCatalogo").focus();
+        }
+
+        async function forzarRecargaCatalogo() {
+            localStorage.removeItem("cache_productos_manu");
+            localStorage.removeItem("cache_productos_tiempo");
+            await cargarListaProductos(true);
+        }
+
+        async function cargarListaProductos(forzarRed = false) {
+            const contenedor = document.getElementById("vistaProductosInterna");
+            
+            let productos = null;
+            const cacheGuardada = localStorage.getItem("cache_productos_manu");
+            const tiempoCache = localStorage.getItem("cache_productos_tiempo");
+            const ahora = new Date().getTime();
+
+            if (!forzarRed && cacheGuardada && tiempoCache && (ahora - tiempoCache < 300000)) {
+                try {
+                    productos = JSON.parse(cacheGuardada);
+                } catch(e) { productos = null; }
+            }
+
+            if (!productos) {
+                const res = await API.llamar("obtenerProductos", {}, "GET");
+                if (res && res.status === "success") {
+                    productos = res.data;
+                    localStorage.setItem("cache_productos_manu", JSON.stringify(productos));
+                    localStorage.setItem("cache_productos_tiempo", ahora);
+                } else {
+                    contenedor.innerHTML = `<p style="color: #ef4444; text-align: center;">Error al cargar el inventario.</p>`;
+                    return;
+                }
+            }
+
+            listaProductosCache = productos || [];
+            listaProductosFiltradosCache = listaProductosCache;
+            paginaActual = 1;
+            renderizarTablaProductosPaginada();
+        }
+
+        function filtrarCatalogoEnVivo() {
+            const query = document.getElementById("inputBuscadorCatalogo").value.toLowerCase().trim();
+            if (!query) {
+                listaProductosFiltradosCache = listaProductosCache;
+                paginaActual = 1;
+                renderizarTablaProductosPaginada();
+                return;
+            }
+
+            const terminos = query.split(/\s+/);
+
+            listaProductosFiltradosCache = listaProductosCache.filter(p => {
+                const sku = String(p.SKU || p.sku || p.Ref || "").toLowerCase();
+                const nombre = String(p.Nombre || p.nombre || p.descripcion || p.Descripcion || "").toLowerCase();
+                const categoria = String(p.ID_Categoria || p.categoria || "").toLowerCase();
+                const material = String(p.Material_Oro || p.Material || p.material || p.ID_Proveedor || "").toLowerCase();
+                const color = String(p.Color || p.ID_Subcategoria || "").toLowerCase();
+                const ubicacion = String(p.ID_Ubicacion || p.ubicacion || "").toLowerCase();
+                const codigoBarra = String(p.Codigo_Barra || p.codigo_barra || p.barcode || "").toLowerCase();
+                const pesoStr = String(p.Peso || p.peso || "").toLowerCase();
+                const piedraStr = String(p.Piedra || p.piedra || "").toLowerCase();
+
+                return terminos.every(termino => {
+                    return sku.includes(termino) || 
+                           nombre.includes(termino) || 
+                           categoria.includes(termino) || 
+                           material.includes(termino) || 
+                           color.includes(termino) ||
+                           ubicacion.includes(termino) ||
+                           codigoBarra.includes(termino) || 
+                           pesoStr.includes(termino) ||
+                           piedraStr.includes(termino);
+                });
+            });
+
+            paginaActual = 1;
+            renderizarTablaProductosPaginada();
+        }
+
+        function cambiarPagina(delta) {
+            const totalPaginas = Math.ceil(listaProductosFiltradosCache.length / registrosPorPagina) || 1;
+            paginaActual += delta;
+            if (paginaActual < 1) paginaActual = 1;
+            if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+            renderizarTablaProductosPaginada();
+        }
+
+        function renderizarTablaProductosPaginada() {
+            const contenedor = document.getElementById("vistaProductosInterna");
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+
+            if (listaProductosFiltradosCache.length === 0) { 
+                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No se encontraron joyas que coincidan con la búsqueda.</p>`;
+                return; 
+            }
+
+            const totalRegistros = listaProductosFiltradosCache.length;
+            const totalPaginas = Math.ceil(totalRegistros / registrosPorPagina) || 1;
+            if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+
+            const inicio = (paginaActual - 1) * registrosPorPagina;
+            const fin = inicio + registrosPorPagina;
+            const productosPagina = listaProductosFiltradosCache.slice(inicio, fin);
+
+            const controlesPaginacionHtml = (posicionClase) => `
+                <div class="pagination-container ${posicionClase}">
+                    <span>Mostrando registros del <strong>${inicio + 1}</strong> al <strong>${Math.min(fin, totalRegistros)}</strong> de un total de <strong>${totalRegistros}</strong> joyas</span>
+                    <div class="pagination-buttons">
+                        <button class="btn-page" onclick="cambiarPagina(-1)" ${paginaActual === 1 ? 'disabled' : ''}>◀ Anterior</button>
+                        <span style="font-weight: 600; padding: 0 5px;">Página ${paginaActual} de ${totalPaginas}</span>
+                        <button class="btn-page" onclick="cambiarPagina(1)" ${paginaActual === totalPaginas ? 'disabled' : ''}>Siguiente ▶</button>
+                    </div>
+                </div>`;
+
+            let html = '';
+            html += controlesPaginacionHtml('top-pagination');
+
+            html += `<div class="table-container"><table class="data-table"><thead><tr>`;
+            
+            if (esAdmin) {
+                html += `<th><input type="checkbox" onclick="seleccionarTodosCheckboxes(this)" title="Seleccionar todos"></th><th>Fecha</th><th>SKU</th><th>Producto</th><th>Categoría</th><th>Color</th><th>Material</th><th>Peso</th><th>Costo</th><th>Margen</th><th>Desc.</th><th>Venta Final</th><th>Ubicación</th><th>Foto</th><th>Etiqueta</th><th>Acciones</th>`;
+            } else {
+                html += `<th>SKU</th><th>Producto</th><th>Color</th><th>Material</th><th>Peso</th><th>Venta Final</th><th>Ubicación</th><th>Foto</th>`;
+            }
+
+            html += `</tr></thead><tbody>`;
+
+            productosPagina.forEach(p => {
+                let fotoHtml = p.Foto ? `<div class="img-thumbnail-container" onclick="abrirZoomImagen('${p.Foto}')"><img src="${p.Foto}" alt="Joya" loading="lazy"></div>` : `<span style="font-size: 1.2rem;">💍</span>`;
+                
+                let valPiedraItem = (p.Valor_Piedra !== undefined && p.Valor_Piedra !== null && String(p.Valor_Piedra).trim() !== "") ? Number(p.Valor_Piedra) : 0;
+                if (isNaN(valPiedraItem)) valPiedraItem = 0;
+
+                let valOroItem = (p.Valor_Oro !== undefined && p.Valor_Oro !== null && String(p.Valor_Oro).trim() !== "") ? Number(p.Valor_Oro) : 0;
+                if (isNaN(valOroItem)) valOroItem = 0;
+
+                let valorCompraDirecto = (p.Valor_Compra !== undefined && p.Valor_Compra !== null && String(p.Valor_Compra).trim() !== "") ? Number(p.Valor_Compra) : 0;
+                if (isNaN(valorCompraDirecto)) valorCompraDirecto = 0;
+
+                let costo = valorCompraDirecto > 0 ? valorCompraDirecto : (valOroItem + valPiedraItem);
+
+                let margen = (p.Porcentaje_Venta !== undefined && p.Porcentaje_Venta !== null && String(p.Porcentaje_Venta).trim() !== "") ? Number(p.Porcentaje_Venta) : 100;
+                if (isNaN(margen)) margen = 100;
+
+                let descPct = (p.Tiene_Descuento !== undefined && p.Tiene_Descuento !== null && String(p.Tiene_Descuento).trim() !== "") ? Number(p.Tiene_Descuento) : 0;
+                if (isNaN(descPct)) descPct = 0;
+
+                let pesoCrudo = p.Peso !== undefined && p.Peso !== null && String(p.Peso).trim() !== "" ? p.Peso : (p.peso !== undefined && p.peso !== null && String(p.peso).trim() !== "" ? p.peso : 0);
+                let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
+
+                let baseVentaCalculada = valPiedraItem + (pesoItem * valorOroDelDiaCache);
+                let precioBase = baseVentaCalculada * (1 + (margen / 100));
+                let valorVenta = precioBase - (precioBase * (descPct / 100));
+                if (isNaN(valorVenta)) valorVenta = 0;
+
+                let pesoMostrado = pesoCrudo !== 0 ? pesoCrudo : '';
+                let colorTabla = p.Color || p.ID_Subcategoria || '-';
+                let materialTabla = p.Material_Oro || p.Material || p.material || p.ID_Proveedor || '-';
+                let codigoBarraVal = p.Codigo_Barra || p.codigo_barra || '7700000000000';
+                let fotoVal = p.Foto || '';
+
+                let valorVentaRedondeado = Math.round(valorVenta);
+
+                let botonQrHtml = `<td><button class="btn-action btn-qr" onclick="abrirModalEtiqueta('${p.SKU}', '${encodeURIComponent(p.Nombre || '')}', '${codigoBarraVal}', '${encodeURIComponent(fotoVal)}', '${valorVentaRedondeado}')" title="Ver QR y Código de Barras Separados">🏷️</button></td>`;
+
+                html += `<tr>`;
+
+                if (esAdmin) {
+                    let fechaLimpia = p.Fecha_Creacion ? String(p.Fecha_Creacion).split('T')[0] : '-';
+                    let descBadge = descPct > 0 ? `<span class="badge" style="background-color: #ef4444; font-size: 0.75rem;">${descPct}%</span>` : `<span class="badge" style="background-color: #64748b; font-size: 0.75rem;">0%</span>`;
+                    let botonesAccion = `<td><div class="btn-action-container">
+                        <button class="btn-action btn-edit" onclick="abrirFormularioEditarProducto('${encodeURIComponent(JSON.stringify(p))}')" title="Editar">✏️</button>
+                        <button class="btn-action btn-delete" onclick="eliminarProducto('${p.SKU}')" title="Eliminar">🗑️</button>
+                    </div></td>`;
+
+                    html += `
+                        <td><input type="checkbox" class="sku-checkbox" value="${p.SKU}"></td>
+                        <td>${fechaLimpia}</td>
+                        <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
+                        <td>${p.Nombre || '-'}</td>
+                        <td><span class="badge" style="background-color: #0f172a; font-size: 0.75rem;">${p.ID_Categoria || '-'}</span></td>
+                        <td>${colorTabla}</td>
+                        <td>${materialTabla}</td>
+                        <td>${pesoMostrado ? pesoMostrado + 'g' : '-'}</td>
+                        <td>$${costo.toLocaleString()}</td>
+                        <td>${margen}%</td>
+                        <td>${descBadge}</td>
+                        <td><strong style="color: #10b981;">$${valorVentaRedondeado.toLocaleString()}</strong></td>
+                        <td>${p.ID_Ubicacion || '-'}</td>
+                        <td>${fotoHtml}</td>
+                        ${botonQrHtml}
+                        ${botonesAccion}`;
+                } else {
+                    html += `
+                        <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
+                        <td>${p.Nombre || '-'}</td>
+                        <td>${colorTabla}</td>
+                        <td>${materialTabla}</td>
+                        <td>${pesoMostrado ? pesoMostrado + 'g' : '-'}</td>
+                        <td><strong style="color: #10b981;">$${valorVentaRedondeado.toLocaleString()}</strong></td>
+                        <td>${p.ID_Ubicacion || '-'}</td>
+                        <td>${fotoHtml}</td>`;
+                }
+
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            html += controlesPaginacionHtml('bottom-pagination');
+
+            contenedor.innerHTML = html;
+        }
+
+        function abrirModalEtiqueta(sku, nombreEncoded, codigoBarra, fotoEncoded, valorVentaStr) {
+            let nombre = decodeURIComponent(nombreEncoded);
+            let foto = decodeURIComponent(fotoEncoded);
+            let valorVentaNum = Number(valorVentaStr) || 0;
+
+            document.getElementById("modalSkuLabel").textContent = `SKU: ${sku}`;
+            document.getElementById("modalSkuBarcodeLabel").textContent = `SKU: ${sku}`;
+            document.getElementById("modalDescLabel").textContent = "Escanee para ver certificado digital";
+
+            // APUNTA DIRECTAMENTE A LA RUTA DE GITHUB PAGES (cert.html?sku=...)
+            let certUrl = `https://glasas.github.io/MANU_JOYEROS/cert.html?sku=${sku}`;
+            
+            let qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(certUrl)}`;
+            document.getElementById("imgQrGenerado").src = qrApiUrl;
+
+            try {
+                JsBarcode("#barcodeSvg", codigoBarra, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 1.5,
+                    height: 45,
+                    displayValue: true,
+                    fontSize: 11,
+                    margin: 2
+                });
+            } catch (e) {
+                console.error("Error generando código de barras:", e);
+            }
+
+            document.getElementById("modalQrBarra").classList.add("active");
+        }
+
+        function descargarQrPNG() {
+            const imgQr = document.getElementById("imgQrGenerado");
+            const skuText = document.getElementById("modalSkuLabel").textContent.replace("SKU: ", "").trim();
+            
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const imageObj = new Image();
+            imageObj.crossOrigin = "anonymous";
+            
+            imageObj.onload = function() {
+                canvas.width = imageObj.width;
+                canvas.height = imageObj.height;
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(imageObj, 0, 0);
+                
+                let pngUrl = canvas.toDataURL("image/png");
+                let link = document.createElement("a");
+                link.href = pngUrl;
+                link.download = `QR_Certificado_SKU_${skuText}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            imageObj.src = imgQr.src;
+        }
+
+        function imprimirSeccion(sectionId) {
+            const seccion = document.getElementById(sectionId);
+            seccion.classList.add("print-active");
+            window.print();
+            seccion.classList.remove("print-active");
+        }
+
+        function descargarBarcodePNG() {
+            const svg = document.getElementById("barcodeSvg");
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                let pngUrl = canvas.toDataURL("image/png");
+                let link = document.createElement("a");
+                link.href = pngUrl;
+                link.download = "codigo_barras.png";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+        }
+
+        function cerrarModalQr() {
+            document.getElementById("modalQrBarra").classList.remove("active");
+        }
+
+        function abrirZoomImagen(urlFoto) {
+            document.getElementById("imgModalSrc").src = urlFoto;
+            document.getElementById("imageModal").classList.add("active");
+        }
+
+        function cerrarZoomImagen() {
+            document.getElementById("imageModal").classList.remove("active");
+        }
+
+        async function abrirFormularioNuevoProducto() {
+            fotoBase64Temporal = "";
+            await cargarCategoriasDinamicas();
+            await cargarMaterialesDinamicos();
+            await cargarColoresDinamicos();
+            await cargarValorOroDia();
+
+            let optsCat = listaCategoriasCache.map(c => `<option value="${c}">${c}</option>`).join('') + `<option value="OTRO">+ Agregar...</option>`;
+            let optsMat = listaMaterialesCache.map(m => `<option value="${m}">${m}</option>`).join('') + `<option value="OTRO">+ Agregar...</option>`;
+            let optsCol = listaColoresCache.map(cl => `<option value="${cl}">${cl}</option>`).join('') + `<option value="OTRO">+ Agregar...</option>`;
+
+            document.getElementById("vistaProductosInterna").innerHTML = `
+                <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Registrar Nueva Joya <span style="font-size: 0.85rem; color: #d97706; font-weight: normal; float: right;">🪙 Oro del Día: $${valorOroDelDiaCache.toLocaleString()} /g</span></h4>
+                    <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Categoría *</label>
+                                <select id="prodCategoriaSelect" required onchange="verificarCampoDinamico(this, 'prodCategoriaNueva')">
+                                    <option value="">Seleccione...</option>${optsCat}
+                                </select>
+                                <input type="text" id="prodCategoriaNueva" style="display:none; margin-top:5px;" placeholder="Nueva categoría">
+                            </div>
+                            <div class="form-group"><label>Nombre / Descripción *</label><input type="text" id="prodNombre" required placeholder="Ej: Anillo Esmeralda"></div>
+                            
+                            <div class="form-group"><label>Color *</label>
+                                <select id="prodColorSelect" required onchange="verificarCampoDinamico(this, 'prodColorNueva')">
+                                    <option value="">Seleccione...</option>${optsCol}
+                                </select>
+                                <input type="text" id="prodColorNueva" style="display:none; margin-top:5px;" placeholder="Ej: AMARILLO, BLANCO">
+                            </div>
+
+                            <div class="form-group"><label>Material *</label>
+                                <select id="prodMaterialSelect" required onchange="verificarMaterialDinamico(this, 'prodMaterialNuevo')">
+                                    <option value="">Seleccione...</option>${optsMat}
+                                </select>
+                                <input type="text" id="prodMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Ej: ORO o PLATA">
+                            </div>
+
+                            <div class="form-group"><label>Tipo de Piedra</label><select id="prodPiedraSelect" onchange="verificarCampoDinamico(this, 'prodPiedraNueva')">
+                                <option value="ESMERALDA">ESMERALDA</option><option value="DIAMANTE">DIAMANTE</option><option value="RUBI">RUBÍ</option><option value="ZAFIRO">ZAFIRO</option><option value="CIRCON">CIRCÓN</option><option value="SIN PIEDRA">SIN PIEDRA</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="prodPiedraNueva" style="display:none; margin-top:5px;" placeholder="Nueva piedra"></div>
+                            
+                            <div class="form-group"><label>Peso (Gramos)</label><input type="text" id="prodPeso" placeholder="Ej: 1,9" value="0" oninput="calcularSumaCompraYVenta('prodPeso', 'prodValorPiedra', 'prodValorOro', 'prodMargen', 'prodDescuento', 'lblVentaEnVivo')"></div>
+                            
+                            <div class="form-group"><label>Valor de la Piedra ($)</label><input type="number" id="prodValorPiedra" placeholder="Ej: 1000000" value="0" oninput="calcularSumaCompraYVenta('prodPeso', 'prodValorPiedra', 'prodValorOro', 'prodMargen', 'prodDescuento', 'lblVentaEnVivo')"></div>
+                            <div class="form-group"><label>Valor del Oro ($) [Compra]</label><input type="number" id="prodValorOro" placeholder="Ej: 500000" value="0" oninput="calcularSumaCompraYVenta('prodPeso', 'prodValorPiedra', 'prodValorOro', 'prodMargen', 'prodDescuento', 'lblVentaEnVivo')"></div>
+
+                            <div class="form-group"><label>Porcentaje de Venta (%)</label><input type="number" id="prodMargen" placeholder="Ej: 100" value="100" oninput="calcularSumaCompraYVenta('prodPeso', 'prodValorPiedra', 'prodValorOro', 'prodMargen', 'prodDescuento', 'lblVentaEnVivo')"></div>
+                            <div class="form-group"><label>% Descuento</label><select id="prodDescuento" onchange="calcularSumaCompraYVenta('prodPeso', 'prodValorPiedra', 'prodValorOro', 'prodMargen', 'prodDescuento', 'lblVentaEnVivo')">
+                                <option value="0">0% (Sin Descuento)</option><option value="5">5%</option><option value="10">10%</option><option value="15">15%</option><option value="20">20%</option><option value="25">25%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option>
+                            </select></div>
+                            <div class="form-group" style="background: #e2e8f0; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center;">
+                                <label style="font-size: 0.8rem; color: #475569; font-weight: bold;">VALOR VENTA ESTIMADO:</label>
+                                <span id="lblVentaEnVivo" style="font-size: 1.2rem; font-weight: bold; color: #10b981;">$0</span>
+                            </div>
+                            <div class="form-group"><label>Ubicación Física</label><select id="prodUbicacionSelect" onchange="verificarCampoDinamico(this, 'prodUbicacionNueva')">
+                                <option value="VITRINA 1">VITRINA 1</option><option value="VITRINA 2">VITRINA 2</option><option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option><option value="CAJA FUERTE">CAJA FUERTE</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="prodUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Nueva ubicación"></div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>📸 Foto del Producto (Cámara o Galería)</label>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                                    <input type="file" accept="image/*" capture="environment" id="inputFotoProd" onchange="procesarImagen(event, 'previewProd')">
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <img id="previewProd" src="" style="max-width: 150px; max-height: 150px; display: none; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: cover;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="renderizarModuloProductos(document.getElementById('contentBody'))">Cancelar</button>
+                            <button type="submit" class="btn-form-save">Guardar</button>
+                        </div>
+                    </form>
+                </div>`;
+            calcularSumaCompraYVenta('prodPeso', 'prodValorPiedra', 'prodValorOro', 'prodMargen', 'prodDescuento', 'lblVentaEnVivo');
+        }
+
+        async function abrirFormularioEditarProducto(productoEncoded) {
+            const p = JSON.parse(decodeURIComponent(productoEncoded));
+            fotoBase64Temporal = p.Foto || "";
+            await cargarCategoriasDinamicas();
+            await cargarMaterialesDinamicos();
+            await cargarColoresDinamicos();
+            await cargarValorOroDia();
+
+            let colorActualProd = p.Color || p.ID_Subcategoria || '';
+            let materialActualProd = p.Material_Oro || p.Material || p.material || p.ID_Proveedor || '';
+
+            let optsCat = listaCategoriasCache.map(c => `<option value="${c}" ${c === p.ID_Categoria ? 'selected' : ''}>${c}</option>`).join('') + `<option value="OTRO">+ Agregar...</option>`;
+            let optsMat = listaMaterialesCache.map(m => `<option value="${m}" ${m === materialActualProd ? 'selected' : ''}>${m}</option>`).join('') + `<option value="OTRO">+ Agregar...</option>`;
+            let optsCol = listaColoresCache.map(cl => `<option value="${cl}" ${cl === colorActualProd ? 'selected' : ''}>${cl}</option>`).join('') + `<option value="OTRO">+ Agregar...</option>`;
+
+            let descActual = (p.Tiene_Descuento !== undefined && p.Tiene_Descuento !== null && String(p.Tiene_Descuento).trim() !== "") ? Number(p.Tiene_Descuento) : 0;
+            if (isNaN(descActual)) descActual = 0;
+
+            let valPiedraActual = (p.Valor_Piedra !== undefined && p.Valor_Piedra !== null && String(p.Valor_Piedra).trim() !== "") ? Number(p.Valor_Piedra) : 0;
+            if (isNaN(valPiedraActual)) valPiedraActual = 0;
+
+            let valOroActual = (p.Valor_Oro !== undefined && p.Valor_Oro !== null && String(p.Valor_Oro).trim() !== "") ? Number(p.Valor_Oro) : 0;
+            if (isNaN(valOroActual)) valOroActual = 0;
+
+            let margenActual = (p.Porcentaje_Venta !== undefined && p.Porcentaje_Venta !== null && String(p.Porcentaje_Venta).trim() !== "") ? Number(p.Porcentaje_Venta) : 100;
+            if (isNaN(margenActual)) margenActual = 100;
+
+            let pesoActual = p.Peso !== undefined && p.Peso !== null && String(p.Peso).trim() !== "" ? p.Peso : (p.peso !== undefined && p.peso !== null && String(p.peso).trim() !== "" ? p.peso : 0);
+
+            document.getElementById("vistaProductosInterna").innerHTML = `
+                <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 1rem; color: #0f172a;">Editar Joya / Producto [SKU: ${p.SKU || p.sku}] <span style="font-size: 0.85rem; color: #d97706; font-weight: normal; float: right;">🪙 Oro del Día: $${valorOroDelDiaCache.toLocaleString()} /g</span></h4>
+                    <form id="formEditarProducto" onsubmit="actualizarProducto(event, '${p.SKU || p.sku}')">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Categoría *</label>
+                                <select id="editCategoriaSelect" required onchange="verificarCampoDinamico(this, 'editCategoriaNueva')">
+                                    ${optsCat}
+                                </select>
+                                <input type="text" id="editCategoriaNueva" style="display:none; margin-top:5px;" placeholder="Nueva categoría">
+                            </div>
+                            <div class="form-group"><label>Nombre / Descripción *</label><input type="text" id="editNombre" required value="${p.Nombre || p.nombre || ''}"></div>
+                            
+                            <div class="form-group"><label>Color *</label>
+                                <select id="editColorSelect" required onchange="verificarCampoDinamico(this, 'editColorNueva')">
+                                    ${optsCol}
+                                </select>
+                                <input type="text" id="editColorNueva" style="display:none; margin-top:5px;" placeholder="Ej: AMARILLO, BLANCO">
+                            </div>
+
+                            <div class="form-group"><label>Material *</label>
+                                <select id="editMaterialSelect" required onchange="verificarMaterialDinamico(this, 'editMaterialNuevo')">
+                                    ${optsMat}
+                                </select>
+                                <input type="text" id="editMaterialNuevo" style="display:none; margin-top:5px;" placeholder="Ej: ORO o PLATA">
+                            </div>
+
+                            <div class="form-group"><label>Tipo de Piedra</label><select id="editPiedraSelect" onchange="verificarCampoDinamico(this, 'editPiedraNueva')">
+                                <option value="ESMERALDA">ESMERALDA</option><option value="DIAMANTE">DIAMANTE</option><option value="RUBI">RUBÍ</option><option value="ZAFIRO">ZAFIRO</option><option value="CIRCON">CIRCÓN</option><option value="SIN PIEDRA">SIN PIEDRA</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="editPiedraNueva" style="display:none; margin-top:5px;" placeholder="Nueva piedra"></div>
+
+                            <div class="form-group"><label>Peso (Gramos)</label><input type="text" id="editPeso" value="${pesoActual}" oninput="calcularSumaCompraYVenta('editPeso', 'editValorPiedra', 'editValorOro', 'editMargen', 'editDescuento', 'lblVentaEditEnVivo')"></div>
+                            
+                            <div class="form-group"><label>Valor de la Piedra ($)</label><input type="number" id="editValorPiedra" value="${valPiedraActual}" oninput="calcularSumaCompraYVenta('editPeso', 'editValorPiedra', 'editValorOro', 'editMargen', 'editDescuento', 'lblVentaEditEnVivo')"></div>
+                            <div class="form-group"><label>Valor del Oro ($) [Compra]</label><input type="number" id="editValorOro" value="${valOroActual}" oninput="calcularSumaCompraYVenta('editPeso', 'editValorPiedra', 'editValorOro', 'editMargen', 'editDescuento', 'lblVentaEditEnVivo')"></div>
+
+                            <div class="form-group"><label>Porcentaje de Venta (%)</label><input type="number" id="editMargen" value="${margenActual}" oninput="calcularSumaCompraYVenta('editPeso', 'editValorPiedra', 'editValorOro', 'editMargen', 'editDescuento', 'lblVentaEditEnVivo')"></div>
+                            
+                            <div class="form-group"><label>% Descuento</label><select id="editDescuento" onchange="calcularSumaCompraYVenta('editPeso', 'editValorPiedra', 'editValorOro', 'editMargen', 'editDescuento', 'lblVentaEditEnVivo')">
+                                <option value="0" ${descActual == 0 ? 'selected' : ''}>0% (Sin Descuento)</option><option value="5" ${descActual == 5 ? 'selected' : ''}>5%</option><option value="10" ${descActual == 10 ? 'selected' : ''}>10%</option><option value="15" ${descActual == 15 ? 'selected' : ''}>15%</option><option value="20" ${descActual == 20 ? 'selected' : ''}>20%</option><option value="25" ${descActual == 25 ? 'selected' : ''}>25%</option><option value="30" ${descActual == 30 ? 'selected' : ''}>30%</option><option value="40" ${descActual == 40 ? 'selected' : ''}>40%</option><option value="50" ${descActual == 50 ? 'selected' : ''}>50%</option>
+                            </select></div>
+
+                            <div class="form-group" style="background: #e2e8f0; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center;">
+                                <label style="font-size: 0.80rem; color: #475569; font-weight: bold;">VALOR VENTA ESTIMADO:</label>
+                                <span id="lblVentaEditEnVivo" style="font-size: 1.2rem; font-weight: bold; color: #10b981;">$0</span>
+                            </div>
+
+                            <div class="form-group"><label>Ubicación Física</label><select id="editUbicacionSelect" onchange="verificarCampoDinamico(this, 'editUbicacionNueva')">
+                                <option value="VITRINA 1" ${p.ID_Ubicacion === 'VITRINA 1' ? 'selected' : ''}>VITRINA 1</option><option value="VITRINA 2" ${p.ID_Ubicacion === 'VITRINA 2' ? 'selected' : ''}>VITRINA 2</option><option value="VITRINA PRINCIPAL" ${p.ID_Ubicacion === 'VITRINA PRINCIPAL' ? 'selected' : ''}>VITRINA PRINCIPAL</option><option value="CAJA FUERTE" ${p.ID_Ubicacion === 'CAJA FUERTE' ? 'selected' : ''}>CAJA FUERTE</option><option value="OTRO">+ Agregar...</option>
+                            </select><input type="text" id="editUbicacionNueva" style="display:none; margin-top:5px;" placeholder="Nueva ubicación"></div>
+
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>📸 Actualizar Foto (Cámara o Galería)</label>
+                                <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                                    <input type="file" accept="image/*" capture="environment" id="inputFotoEdit" onchange="procesarImagen(event, 'previewEdit')">
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <img id="previewEdit" src="${p.Foto || ''}" style="max-width: 150px; max-height: 150px; ${p.Foto ? '' : 'display:none;'} border-radius: 8px; border: 1px solid #cbd5e1; object-fit: cover;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="renderizarModuloProductos(document.getElementById('contentBody'))">Cancelar</button>
+                            <button type="submit" class="btn-form-update">Actualizar Producto</button>
+                        </div>
+                    </form>
+                </div>`;
+            calcularSumaCompraYVenta('editPeso', 'editValorPiedra', 'editValorOro', 'editMargen', 'editDescuento', 'lblVentaEditEnVivo');
+        }
+
+        function calcularSumaCompraYVenta(idPeso, idPiedra, idOro, idMargen, idDesc, idLabel) {
+            const pesoValInput = document.getElementById(idPeso).value;
+            const pesoVal = (pesoValInput !== undefined && pesoValInput !== null && String(pesoValInput).trim() !== "") ? parseFloat(String(pesoValInput).replace(',', '.')) : 0;
+            const pesoLimpio = isNaN(pesoVal) ? 0 : pesoVal;
+
+            const valPiedraInput = document.getElementById(idPiedra).value;
+            const valPiedra = (valPiedraInput !== undefined && valPiedraInput !== null && String(valPiedraInput).trim() !== "") ? Number(valPiedraInput) : 0;
+            const piedraLimpiada = isNaN(valPiedra) ? 0 : valPiedra;
+            
+            const baseVenta = piedraLimpiada + (pesoLimpio * valorOroDelDiaCache);
+
+            const margenInput = document.getElementById(idMargen).value;
+            const margen = (margenInput !== undefined && margenInput !== null && String(margenInput).trim() !== "") ? Number(margenInput) : 100;
+            const margenLimpio = isNaN(margen) ? 100 : margen;
+
+            const descInput = document.getElementById(idDesc).value;
+            const desc = (descInput !== undefined && descInput !== null && String(descInput).trim() !== "") ? Number(descInput) : 0;
+            const descLimpio = isNaN(desc) ? 0 : desc;
+
+            const precioBase = baseVenta * (1 + (margenLimpio / 100));
+            const precioFinal = precioBase - (precioBase * (descLimpio / 100));
+            const precioFinalLimpio = isNaN(precioFinal) ? 0 : precioFinal;
+
+            document.getElementById(idLabel).textContent = "$" + Math.round(precioFinalLimpio).toLocaleString();
+        }
+
+        function procesarImagen(event, previewId) {
+            const archivo = event.target.files[0];
+            if (!archivo) return;
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    const MAX_WIDTH = 600;
+                    const MAX_HEIGHT = 600;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    fotoBase64Temporal = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    const preview = document.getElementById(previewId);
+                    preview.src = fotoBase64Temporal;
+                    preview.style.display = 'block';
+                }
+                img.src = e.target.result;
+            }
+            lector.readAsDataURL(archivo);
+        }
+
+        function verificarMaterialDinamico(select, inputId) {
+            const input = document.getElementById(inputId);
+            if (select.value === "OTRO") { 
+                input.style.display = "block"; 
+                input.required = true; 
+                input.placeholder = "Debe incluir ORO o PLATA";
+                input.focus(); 
+            } else { 
+                input.style.display = "none"; 
+                input.required = false; 
+            }
+        }
+
+        function obtenerMaterialSeleccionado(selectId, inputNuevoId) {
+            const selectVal = document.getElementById(selectId).value;
+            if (selectVal === "OTRO") {
+                let valNuevo = document.getElementById(inputNuevoId).value.trim().toUpperCase();
+                if (!valNuevo.includes("ORO") && !valNuevo.includes("PLATA")) {
+                    alert("⚠️ Error: Solo se permite agregar materiales que contengan 'ORO' o 'PLATA'.");
+                    return null;
+                }
+                return valNuevo;
+            }
+            return selectVal;
+        }
+
+        async function guardarNuevoProducto(event, forzarCreacion = false) {
+            event.preventDefault();
+            let categoria = document.getElementById("prodCategoriaSelect").value === "OTRO" ? document.getElementById("prodCategoriaNueva").value.trim().toUpperCase() : document.getElementById("prodCategoriaSelect").value;
+            
+            let color = document.getElementById("prodColorSelect").value === "OTRO" ? document.getElementById("prodColorNueva").value.trim().toUpperCase() : document.getElementById("prodColorSelect").value;
+            
+            let material = obtenerMaterialSeleccionado("prodMaterialSelect", "prodMaterialNuevo");
+            if (!material) return;
+
+            let piedra = document.getElementById("prodPiedraSelect").value === "OTRO" ? document.getElementById("prodPiedraNueva").value.trim().toUpperCase() : document.getElementById("prodPiedraSelect").value;
+            let ubicacion = document.getElementById("prodUbicacionSelect").value === "OTRO" ? document.getElementById("prodUbicacionNueva").value.trim().toUpperCase() : document.getElementById("prodUbicacionSelect").value;
+
+            let valPiedraProd = Number(document.getElementById("prodValorPiedra").value) || 0;
+            let valOroProd = Number(document.getElementById("prodValorOro").value) || 0;
+
+            const data = {
+                action: "crearProducto",
+                nombre: document.getElementById("prodNombre").value.trim(),
+                categoria: categoria,
+                color: color,
+                ID_Subcategoria: color,
+                material: material,
+                Material_Oro: material,
+                Material: material,
+                ID_Proveedor: material,
+                piedra: piedra,
+                peso: document.getElementById("prodPeso").value || "0",
+                valor_oro: valOroProd,
+                valor_piedra: valPiedraProd,
+                valor_compra: valOroProd + valPiedraProd,
+                porcentaje_venta: document.getElementById("prodMargen").value || 100,
+                tiene_descuento: document.getElementById("prodDescuento").value || 0,
+                ubicacion: ubicacion,
+                foto: fotoBase64Temporal,
+                forzar_creacion: forzarCreacion
+            };
+
+            const res = await API.llamar("crearProducto", data, "POST");
+            if (res && res.status === "success") { 
+                alert(res.message); 
+                localStorage.removeItem("cache_productos_manu");
+                renderizarModuloProductos(document.getElementById('contentBody')); 
+            }
+            else if (res && res.status === "existe") {
+                if (confirm(res.message + "\n\n¿Desea registrarlo de todos modos?")) { guardarNuevoProducto(event, true); }
+            } else { alert("Error: " + (res ? res.message : "Desconocido")); }
+        }
+
+        async function actualizarProducto(event, skuProducto) {
+            event.preventDefault();
+            let categoria = document.getElementById("editCategoriaSelect").value === "OTRO" ? document.getElementById("editCategoriaNueva").value.trim().toUpperCase() : document.getElementById("editCategoriaSelect").value;
+            
+            let color = document.getElementById("editColorSelect").value === "OTRO" ? document.getElementById("editColorNueva").value.trim().toUpperCase() : document.getElementById("editColorSelect").value;
+            
+            let material = obtenerMaterialSeleccionado("editMaterialSelect", "editMaterialNuevo");
+            if (!material) return;
+
+            let piedra = document.getElementById("editPiedraSelect").value === "OTRO" ? document.getElementById("editPiedraNueva").value.trim().toUpperCase() : document.getElementById("editPiedraSelect").value;
+            let ubicacion = document.getElementById("editUbicacionSelect").value === "OTRO" ? document.getElementById("editUbicacionNueva").value.trim().toUpperCase() : document.getElementById("editUbicacionSelect").value;
+
+            let valPiedraEdit = Number(document.getElementById("editValorPiedra").value) || 0;
+            let valOroEdit = Number(document.getElementById("editValorOro").value) || 0;
+
+            const data = {
+                action: "editarProducto",
+                sku: skuProducto,
+                nombre: document.getElementById("editNombre").value.trim(),
+                categoria: categoria,
+                color: color,
+                ID_Subcategoria: color,
+                material: material,
+                Material_Oro: material,
+                Material: material,
+                ID_Proveedor: material,
+                piedra: piedra,
+                peso: document.getElementById("editPeso").value || "0",
+                valor_oro: valOroEdit,
+                valor_piedra: valPiedraEdit,
+                valor_compra: valOroEdit + valPiedraEdit,
+                porcentaje_venta: document.getElementById("editMargen").value || 100,
+                tiene_descuento: document.getElementById("editDescuento").value || 0,
+                ubicacion: ubicacion,
+                foto: fotoBase64Temporal
+            };
+
+            const res = await API.llamar("editarProducto", data, "POST");
+            if (res && res.status === "success") { 
+                alert(res.message); 
+                localStorage.removeItem("cache_productos_manu"); 
+                renderizarModuloProductos(document.getElementById('contentBody')); 
+            }
+            else { alert("Error al actualizar: " + (res ? res.message : "Desconocido")); }
+        }
+
+        async function eliminarProducto(skuProducto) {
+            if (!confirm("¿Está seguro de eliminar este producto?")) return;
+            const res = await API.llamar("eliminarProducto", { action: "eliminarProducto", sku: skuProducto }, "POST");
+            if (res && res.status === "success") { 
+                alert(res.message); 
+                localStorage.removeItem("cache_productos_manu"); 
+                renderizarModuloProductos(document.getElementById('contentBody')); 
+            }
+            else { alert("Error al eliminar."); }
+        }
+
+        function verificarCampoDinamico(select, inputId) {
+            const input = document.getElementById(inputId);
+            if (select.value === "OTRO") { input.style.display = "block"; input.required = true; input.focus(); }
+            else { input.style.display = "none"; input.required = false; }
+        }
+
+        function abrirEscaner() { alert("Módulo de escáner activo."); }
+    </script>
+</body>
+</html>
+```[cite: 5]
