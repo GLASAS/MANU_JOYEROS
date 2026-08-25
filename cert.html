@@ -49,22 +49,37 @@
             <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
         </div>
 
-        <div class="cert-version-label" id="lblCertVersion">Versión V1.706</div>
+        <div class="cert-version-label" id="lblCertVersion">Versión V3.0</div>
     </div>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
+            // Cargar versión desde config.js correctamente
             if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
-                document.getElementById("lblCertVersion").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
+                document.getElementById("lblCertVersion").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA || 'MANU JOYEROS'}`;
             }
 
             const params = new URLSearchParams(window.location.search);
-            const skuBuscado = params.get("sku");
+            let skuBuscado = "";
+
+            // Soporte para parámetro encriptado ('token') o plano ('sku')
+            const tokenParam = params.get("token");
+            const skuParam = params.get("sku");
+
+            if (tokenParam) {
+                try {
+                    skuBuscado = atob(tokenParam); // Decodifica el Base64 del QR
+                } catch (e) {
+                    skuBuscado = tokenParam;
+                }
+            } else if (skuParam) {
+                skuBuscado = skuParam;
+            }
 
             if (!skuBuscado) {
-                document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ Error: No se especificó ningún SKU en la URL.</p>`;
+                document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ Error: No se especificó ningún código válido en la URL.</p>`;
                 return;
             }
 
@@ -86,23 +101,25 @@
                 const producto = resProd.data.find(p => String(p.SKU || p.sku || "").trim().toUpperCase() === String(skuBuscado).trim().toUpperCase());
 
                 if (!producto) {
-                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se encontró ninguna joya registrada con el SKU: ${skuBuscado}</p>`;
+                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se encontró ninguna joya registrada con el código: ${skuBuscado}</p>`;
                     return;
                 }
 
-                // Extracción estricta basada en la estructura de columnas de Google Sheets
-                let peso = parseFloat(String(producto.Peso || producto.peso || "0").replace(',', '.')) || 0;
+                // Extracción de datos idéntica a la tabla principal del Dashboard
                 let valPiedra = Number(producto.Valor_Piedra || producto.valor_piedra || 0) || 0;
+                let valOroCompra = Number(producto.Valor_Oro || producto.valor_oro || 0) || 0;
+                let valorCompraDirecto = Number(producto.Valor_Compra || producto.valor_compra || 0) || 0;
+                
+                let costoBase = valorCompraDirecto > 0 ? valorCompraDirecto : (valOroCompra + valPiedra);
+
+                let peso = parseFloat(String(producto.Peso || producto.peso || "0").replace(',', '.')) || 0;
                 let margen = Number(producto.Porcentaje_Venta || producto.porcentaje_venta || 100) || 100;
                 let desc = Number(producto.Tiene_Descuento || producto.tiene_descuento || 0) || 0;
 
-                // Fórmula exacta solicitada: (Valor Oro del Día * Peso) + Valor Piedra
-                let costoOroCalculado = peso * valorOroDia;
-                let baseCostoTotal = costoOroCalculado + valPiedra;
-
-                // Aplicando margen y descuento para obtener la Venta Final
-                let precioBaseVenta = baseCostoTotal * (1 + (margen / 100));
-                let valorVentaFinal = Math.round(precioBaseVenta - (precioBaseVenta * (desc / 100)));
+                // Cálculo exacto unificado con la Venta Final de la tabla principal
+                let baseVenta = costoBase > 0 ? costoBase : (valPiedra + (peso * valorOroDia));
+                let precioBase = baseVenta * (1 + (margen / 100));
+                let valorVentaFinal = Math.round(precioBase - (precioBase * (desc / 100)));
 
                 let fotoSrc = producto.Foto || producto.foto || "";
                 let fotoHtml = fotoSrc ? `<img src="${fotoSrc}" alt="Joya Certificada">` : `<span style="font-size: 3rem;">💍</span>`;
@@ -129,7 +146,7 @@
 
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (321) 8123125<br>
+                        NIT: 900.000.000-1 • Tel: +57 (320) 8123125<br>
                         Dirección Principal: Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
