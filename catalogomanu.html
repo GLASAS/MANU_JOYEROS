@@ -3,162 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificado de Autenticidad - MANU JOYEROS</title>
+    <title>Catálogo Digital - MANU JOYEROS</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .cert-card { background: #ffffff; width: 100%; max-width: 480px; padding: 30px 30px 42px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px solid #e2e8f0; text-align: center; position: relative; }
-        .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
-        .cert-logo { font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; color: #0f172a; margin-bottom: 4px; }
-        .cert-subtitle { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: #d97706; font-weight: 600; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; margin: 0; padding: 0; }
+        .catalog-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 30px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .catalog-logo { font-size: 1.8rem; font-weight: bold; letter-spacing: 3px; margin-bottom: 5px; }
+        .catalog-subtitle { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; color: #d97706; font-weight: 600; }
         
-        .product-img-container { width: 180px; height: 180px; margin: 0 auto 20px auto; border-radius: 12px; border: 2px solid #cbd5e1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .product-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .catalog-container { max-width: 1200px; margin: 30px auto; padding: 0 15px; }
         
-        .sku-badge { display: inline-block; background: #0f172a; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; }
-        .product-desc { font-size: 0.95rem; color: #334155; line-height: 1.5; margin-bottom: 20px; padding: 0 10px; }
-        
-        .price-box { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed #cbd5e1; }
-        .price-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: bold; display: block; margin-bottom: 2px; }
-        .price-value { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+        .filters-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .filter-btn { background: #ffffff; border: 1.5px solid #cbd5e1; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: #475569; transition: all 0.2s; }
+        .filter-btn:hover, .filter-btn.active { background: #0f172a; color: #ffffff; border-color: #0f172a; }
 
-        .company-info { font-size: 0.78rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px; line-height: 1.4; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         
-        .btn-print { margin-top: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(15,23,42,0.2); }
-        .btn-print:hover { transform: translateY(-1px); }
+        .product-card { background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        
+        .product-img-box { width: 100%; height: 240px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .product-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .sku-tag { position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(4px); }
 
-        .cert-version-label { position: absolute; bottom: 8px; right: 15px; font-size: 0.68rem; color: #94a3b8; font-weight: 600; }
+        .product-info { padding: 18px; display: flex; flex-direction: column; flex: 1; }
+        .product-title { font-size: 1rem; font-weight: bold; color: #0f172a; margin-bottom: 6px; line-height: 1.4; }
+        .product-details { font-size: 0.80rem; color: #64748b; margin-bottom: 15px; line-height: 1.4; flex: 1; }
+        
+        .product-price-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: auto; }
+        .price-label-cat { font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; font-weight: bold; display: block; }
+        .price-val-cat { font-size: 1.2rem; font-weight: bold; color: #10b981; }
+        
+        .btn-cert-link { background: #0f172a; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s; }
+        .btn-cert-link:hover { background: #1e293b; }
 
-        @media print {
-            body { background: white; padding: 0; }
-            .cert-card { box-shadow: none; border: none; max-width: 100%; padding: 10px; }
-            .no-print { display: none !important; }
-            .cert-version-label { position: fixed; bottom: 5px; right: 10px; }
-        }
+        .catalog-footer { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; margin-top: 40px; }
     </style>
 </head>
 <body>
 
-    <div class="cert-card" id="certContainer">
-        <div class="cert-header">
-            <div class="cert-logo">MANU JOYEROS</div>
-            <div class="cert-subtitle">Certificado de Autenticidad y Garantía</div>
+    <header class="catalog-header">
+        <div class="catalog-logo">MANU JOYEROS</div>
+        <div class="catalog-subtitle">Catálogo Digital Oficial de Alta Joyería</div>
+    </header>
+
+    <div class="catalog-container">
+        <div class="filters-bar" id="filtersContainer">
+            <button class="filter-btn active" onclick="filtrarPorCategoria('TODOS', event)">✨ Todos</button>
+            <button class="filter-btn" onclick="filtrarPorCategoria('ANILLOS', event)">💍 Anillos</button>
+            <button class="filter-btn" onclick="filtrarPorCategoria('CADENAS', event)">⛓️ Cadenas</button>
+            <button class="filter-btn" onclick="filtrarPorCategoria('ARETES', event)">💎 Aretes</button>
+            <button class="filter-btn" onclick="filtrarPorCategoria('DIJES', event)">✨ Dijes</button>
+            <button class="filter-btn" onclick="filtrarPorCategoria('PULSERAS', event)">🔗 Pulseras</button>
         </div>
 
-        <div id="contentArea">
-            <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
+        <div id="catalogGrid" class="products-grid">
+            <p style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 40px 0;">Cargando catálogo de joyas...</p>
         </div>
-
-        <div class="cert-version-label" id="lblCertVersion">Versión V3.0 • MANU JOYEROS</div>
     </div>
+
+    <footer class="catalog-footer">
+        <strong>MANU JOYEROS</strong> • NIT: 900.000.000-1 • Bogotá D.C., Colombia<br>
+        <em>Joyas que trascienden el tiempo</em>
+    </footer>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        let productosGlobales = [];
+        let valorOroDiaGlobal = 250000;
+
         document.addEventListener("DOMContentLoaded", async () => {
-            if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
-                document.getElementById("lblCertVersion").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA || 'MANU JOYEROS'}`;
-            }
+            await cargarDatosCatalogo();
+        });
 
-            const params = new URLSearchParams(window.location.search);
-            let skuBuscado = "";
-
-            const tokenParam = params.get("token");
-            const skuParam = params.get("sku");
-
-            if (tokenParam) {
-                try {
-                    skuBuscado = atob(tokenParam);
-                } catch (e) {
-                    skuBuscado = tokenParam;
-                }
-            } else if (skuParam) {
-                skuBuscado = skuParam;
-            }
-
-            if (!skuBuscado) {
-                document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ Error: No se especificó ningún código válido en la URL.</p>`;
-                return;
-            }
-
+        async function cargarDatosCatalogo() {
             try {
                 const [resOro, resProd] = await Promise.all([
                     API.llamar("obtenerValorOroDia", {}, "GET"),
                     API.llamar("obtenerProductos", {}, "GET")
                 ]);
 
-                let valorOroDiaLocal = 250000;
                 if (resOro && resOro.status === "success" && resOro.valor_oro_dia) {
-                    valorOroDiaLocal = Number(resOro.valor_oro_dia);
+                    valorOroDiaGlobal = Number(resOro.valor_oro_dia);
                 }
 
-                if (!resProd || resProd.status !== "success" || !resProd.data) {
-                    throw new Error("No se pudo conectar con la base de datos.");
+                if (resProd && resProd.status === "success" && resProd.data) {
+                    productosGlobales = resProd.data;
+                    renderizarProductos(productosGlobales);
+                } else {
+                    document.getElementById("catalogGrid").innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ef4444; font-weight: bold;">No se pudo cargar el inventario de joyas.</p>`;
                 }
+            } catch (error) {
+                document.getElementById("catalogGrid").innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ef4444;">Error de conexión con el servidor.</p>`;
+            }
+        }
 
-                const producto = resProd.data.find(p => String(p.SKU || p.sku || "").trim().toUpperCase() === String(skuBuscado).trim().toUpperCase());
+        function filtrarPorCategoria(categoria, event) {
+            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+            if (event && event.target) event.target.classList.add("active");
 
-                if (!producto) {
-                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se encontró ninguna joya registrada con el código: ${skuBuscado}</p>`;
-                    return;
-                }
+            if (categoria === 'TODOS') {
+                renderizarProductos(productosGlobales);
+            } else {
+                const filtrados = productosGlobales.filter(p => String(p.ID_Categoria || p.categoria || "").trim().toUpperCase() === categoria);
+                renderizarProductos(filtrados);
+            }
+        }
 
-                let valPiedraItem = (producto.Valor_Piedra !== undefined && producto.Valor_Piedra !== null && String(producto.Valor_Piedra).trim() !== "") ? Number(producto.Valor_Piedra) : 0;
-                if (isNaN(valPiedraItem)) valPiedraItem = 0;
+        function renderizarProductos(lista) {
+            const grid = document.getElementById("catalogGrid");
+            if (!lista || lista.length === 0) {
+                grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 40px 0;">No hay joyas disponibles en esta categoría.</p>`;
+                return;
+            }
 
-                let margen = (producto.Porcentaje_Venta !== undefined && producto.Porcentaje_Venta !== null && String(producto.Porcentaje_Venta).trim() !== "") ? Number(producto.Porcentaje_Venta) : 100;
-                if (isNaN(margen)) margen = 100;
-
-                let descPct = (producto.Tiene_Descuento !== undefined && producto.Tiene_Descuento !== null && String(producto.Tiene_Descuento).trim() !== "") ? Number(producto.Tiene_Descuento) : 0;
-                if (isNaN(descPct)) descPct = 0;
-
-                let pesoCrudo = producto.Peso !== undefined && producto.Peso !== null && String(producto.Peso).trim() !== "" ? producto.Peso : (producto.peso !== undefined && producto.peso !== null && String(producto.peso).trim() !== "" ? producto.peso : 0);
+            let html = "";
+            lista.forEach(p => {
+                let sku = p.SKU || p.sku || "SN";
+                let nombre = p.Nombre || p.nombre || "Joya Exclusiva";
+                let material = p.Material_Oro || p.Material || p.material || p.ID_Proveedor || "ORO 18K";
+                let color = p.Color || p.ID_Subcategoria || "";
+                
+                let pesoCrudo = p.Peso || p.peso || 0;
                 let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
 
-                let baseVentaCalculada = valPiedraItem + (pesoItem * valorOroDiaLocal);
+                let valPiedra = Number(p.Valor_Piedra) || 0;
+                let margen = Number(p.Porcentaje_Venta) || 100;
+                let descPct = Number(p.Tiene_Descuento) || 0;
+
+                let baseVentaCalculada = valPiedra + (pesoItem * valorOroDiaGlobal);
                 let precioBase = baseVentaCalculada * (1 + (margen / 100));
                 let valorVenta = precioBase - (precioBase * (descPct / 100));
-                if (isNaN(valorVenta)) valorVenta = 0;
+                let valorVentaFinal = Math.round(isNaN(valorVenta) ? 0 : valorVenta);
 
-                let valorVentaFinal = Math.round(valorVenta);
+                let foto = p.Foto || p.foto || "";
+                let fotoHtml = foto ? `<img src="${foto}" alt="${nombre}" loading="lazy">` : `<span style="font-size: 3.5rem;">💍</span>`;
 
-                let fotoSrc = producto.Foto || producto.foto || "";
-                let fotoHtml = fotoSrc ? `<img src="${fotoSrc}" alt="Joya Certificada">` : `<span style="font-size: 3rem;">💍</span>`;
-                let nombreProd = producto.Nombre || producto.nombre || "Joya de Alta Joyería";
-                let materialProd = producto.Material_Oro || producto.Material || producto.material || producto.ID_Proveedor || "ORO DE 18K";
-                let colorProd = producto.Color || producto.ID_Subcategoria || "";
+                let skuToken = btoa(sku);
+                let certLink = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuToken}`;
 
-                document.getElementById("contentArea").innerHTML = `
-                    <div class="product-img-container">
-                        ${fotoHtml}
+                html += `
+                    <div class="product-card">
+                        <div class="product-img-box">
+                            <span class="sku-tag">SKU: ${sku}</span>
+                            ${fotoHtml}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-title">${nombre}</div>
+                            <div class="product-details">
+                                Material: ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}
+                            </div>
+                            <div class="product-price-row">
+                                <div>
+                                    <span class="price-label-cat">Valor Comercial</span>
+                                    <span class="price-val-cat">$${valorVentaFinal.toLocaleString()} COP</span>
+                                </div>
+                                <a href="${certLink}" target="_blank" class="btn-cert-link">📜 Certificado</a>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="sku-badge">SKU: ${producto.SKU || producto.sku || skuBuscado}</div>
-                    
-                    <div class="product-desc">
-                        <strong>${nombreProd}</strong><br>
-                        <span style="font-size: 0.82rem; color: #64748b;">Material: ${materialProd} ${colorProd ? '• Color: ' + colorProd : ''} ${pesoItem > 0 ? '• Peso: ' + pesoItem + 'g' : ''}</span>
-                    </div>
-
-                    <div class="price-box">
-                        <span class="price-label">Valor Comercial Estimado</span>
-                        <span class="price-value">$${valorVentaFinal.toLocaleString()} COP</span>
-                    </div>
-
-                    <div class="company-info">
-                        <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (300) 8123125<br>
-                        Dirección Principal: Bogotá D.C., Colombia<br>
-                        <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
-                    </div>
-
-                    <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir Certificado</button>
                 `;
+            });
 
-            } catch (error) {
-                document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444;">Error al cargar el certificado: ${error.message}</p>`;
-            }
-        });
+            grid.innerHTML = html;
+        }
     </script>
 </body>
 </html>
