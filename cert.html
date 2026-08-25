@@ -56,7 +56,7 @@
     <script src="js/api.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            // Carga de versión desde config.js correctamente
+            // Lectura correcta de la versión desde config.js
             if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
                 document.getElementById("lblCertVersion").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA || 'MANU JOYEROS'}`;
             }
@@ -64,7 +64,7 @@
             const params = new URLSearchParams(window.location.search);
             let skuBuscado = "";
 
-            // Soporte para token encriptado (Base64) o SKU plano
+            // Soporte para token encriptado (Base64) o parámetro SKU plano por compatibilidad
             const tokenParam = params.get("token");
             const skuParam = params.get("sku");
 
@@ -105,18 +105,13 @@
                     return;
                 }
 
-                // Extracción de datos idéntica a la tabla principal del Dashboard
+                // Fórmula exacta e idéntica al Dashboard: ((Piedra + (Peso * OroDia)) * (1 + (Margen / 100))) - Descuento
                 let valPiedra = Number(producto.Valor_Piedra || producto.valor_piedra || 0) || 0;
-                let valOroCompra = Number(producto.Valor_Oro || producto.valor_oro || 0) || 0;
-                let valorCompraDirecto = Number(producto.Valor_Compra || producto.valor_compra || 0) || 0;
-                
-                let costoBase = valorCompraDirecto > 0 ? valorCompraDirecto : (valOroCompra + valPiedra);
-
                 let peso = parseFloat(String(producto.Peso || producto.peso || "0").replace(',', '.')) || 0;
                 let margen = Number(producto.Porcentaje_Venta || producto.porcentaje_venta || 100) || 100;
                 let desc = Number(producto.Tiene_Descuento || producto.tiene_descuento || 0) || 0;
 
-                let baseVenta = costoBase > 0 ? costoBase : (valPiedra + (peso * valorOroDia));
+                let baseVenta = valPiedra + (peso * valorOroDia);
                 let precioBase = baseVenta * (1 + (margen / 100));
                 let valorVentaFinal = Math.round(precioBase - (precioBase * (desc / 100)));
 
@@ -145,7 +140,7 @@
 
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (333) 8123125<br>
+                        NIT: 900.000.000-1 • Tel: +57 (300) 8123125<br>
                         Dirección Principal: Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
