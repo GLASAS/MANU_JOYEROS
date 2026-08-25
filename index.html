@@ -347,13 +347,174 @@
 
             const content = document.getElementById("contentBody");
             if(vista === 'dashboard') { location.reload(); }
-            else if(vista === 'productos' || vista === 'inventario') { renderizarModuloProductos(content); }
+            else if(vista === 'productos') { renderizarModuloProductos(content); }
+            else if(vista === 'inventario') { renderizarModuloInventario(content); }
             else if(vista === 'actualizacion_oro') { renderizarModuloActualizacionOro(content); }
             else if(vista === 'usuarios') { renderizarModuloUsuarios(content); }
             else if(vista === 'cambiar_password') { renderizarModuloCambiarPassword(content); }
             else {
                 content.innerHTML = `<div class="card"><h3>Módulo de ${vista.toUpperCase()}</h3><p>Módulo configurado en la arquitectura del sistema.</p></div>`;
             }
+        }
+
+        async function renderizarModuloInventario(container) {
+            await cargarCategoriasDinamicas();
+            await cargarValorOroDia();
+
+            container.innerHTML = `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #0f172a; margin: 0;">📦 Control y Auditoría de Inventario</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-nuevo-producto" style="background: #059669;" onclick="exportarInventarioCSV()">📥 Exportar Stock</button>
+                            <button class="btn-discreet-refresh" onclick="renderizarModuloInventario(document.getElementById('contentBody'))" title="Recargar">🔄</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 1.5rem;" id="kpisInventario">
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: bold;">TOTAL REFERENCIAS</span>
+                            <div id="kpiTotalItems" style="font-size: 1.5rem; font-weight: bold; color: #0f172a;">0</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: bold;">VALOR TOTAL COSTO</span>
+                            <div id="kpiValorCosto" style="font-size: 1.5rem; font-weight: bold; color: #d97706;">$0</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: bold;">VALOR TOTAL VENTA</span>
+                            <div id="kpiValorVenta" style="font-size: 1.5rem; font-weight: bold; color: #10b981;">$0</div>
+                        </div>
+                    </div>
+
+                    <div class="catalog-toolbar" style="margin-bottom: 1rem;">
+                        <input type="text" id="filtroInvTexto" placeholder="🔍 Buscar por SKU, Nombre, Ubicación..." style="max-width: 350px;" oninput="filtrarTablaInventario()">
+                        <select id="filtroInvUbicacion" style="max-width: 200px;" onchange="filtrarTablaInventario()">
+                            <option value="">Todas las Ubicaciones</option>
+                            <option value="VITRINA 1">VITRINA 1</option>
+                            <option value="VITRINA 2">VITRINA 2</option>
+                            <option value="VITRINA PRINCIPAL">VITRINA PRINCIPAL</option>
+                            <option value="CAJA FUERTE">CAJA FUERTE</option>
+                        </select>
+                    </div>
+
+                    <div id="tablaInventarioContenedor">Cargando inventario físico...</div>
+                </div>`;
+
+            if (!listaProductosCache || listaProductosCache.length === 0) {
+                const res = await API.llamar("obtenerProductos", {}, "GET");
+                if (res && res.status === "success") {
+                    listaProductosCache = res.data || [];
+                }
+            }
+            construirTablaInventario(listaProductosCache);
+        }
+
+        function construirTablaInventario(productos) {
+            let totalCosto = 0;
+            let totalVenta = 0;
+
+            productos.forEach(p => {
+                let vPiedra = Number(p.Valor_Piedra) || 0;
+                let vOro = Number(p.Valor_Oro) || 0;
+                let costo = (Number(p.Valor_Compra) || 0) > 0 ? Number(p.Valor_Compra) : (vPiedra + vOro);
+                totalCosto += costo;
+
+                let peso = parseFloat(String(p.Peso || p.peso || "0").replace(',', '.')) || 0;
+                let margen = Number(p.Porcentaje_Venta) || 100;
+                let desc = Number(p.Tiene_Descuento) || 0;
+                let base = vPiedra + (peso * valorOroDelDiaCache);
+                let vBase = base * (1 + (margen / 100));
+                let vFinal = vBase - (vBase * (desc / 100));
+                totalVenta += Math.round(vFinal);
+            });
+
+            document.getElementById("kpiTotalItems").textContent = productos.length;
+            document.getElementById("kpiValorCosto").textContent = "$" + totalCosto.toLocaleString();
+            document.getElementById("kpiValorVenta").textContent = "$" + totalVenta.toLocaleString();
+
+            let html = `<div class="table-container"><table class="data-table"><thead><tr>
+                <th>SKU</th><th>Nombre</th><th>Categoría</th><th>Ubicación</th><th>Peso</th><th>Costo</th><th>Valor Venta</th><th>Estado</th>
+            </tr></thead><tbody>`;
+
+            productos.forEach(p => {
+                let vPiedra = Number(p.Valor_Piedra) || 0;
+                let vOro = Number(p.Valor_Oro) || 0;
+                let costo = (Number(p.Valor_Compra) || 0) > 0 ? Number(p.Valor_Compra) : (vPiedra + vOro);
+                let peso = parseFloat(String(p.Peso || p.peso || "0").replace(',', '.')) || 0;
+                let margen = Number(p.Porcentaje_Venta) || 100;
+                let desc = Number(p.Tiene_Descuento) || 0;
+                let base = vPiedra + (peso * valorOroDelDiaCache);
+                let vBase = base * (1 + (margen / 100));
+                let vFinal = Math.round(vBase - (vBase * (desc / 100)));
+
+                html += `<tr>
+                    <td><strong style="color: #d97706;">${p.SKU || '-'}</strong></td>
+                    <td>${p.Nombre || '-'}</td>
+                    <td><span class="badge" style="background-color: #0f172a; font-size: 0.75rem;">${p.ID_Categoria || '-'}</span></td>
+                    <td>${p.ID_Ubicacion || '-'}</td>
+                    <td>${peso > 0 ? peso + 'g' : '-'}</td>
+                    <td>$${costo.toLocaleString()}</td>
+                    <td><strong style="color: #10b981;">$${vFinal.toLocaleString()}</strong></td>
+                    <td><span class="badge" style="background-color: #10b981;">DISPONIBLE</span></td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            document.getElementById("tablaInventarioContenedor").innerHTML = html;
+        }
+
+        function filtrarTablaInventario() {
+            const query = document.getElementById("filtroInvTexto").value.toLowerCase().trim();
+            const ubicacionFiltro = document.getElementById("filtroInvUbicacion").value;
+
+            const filtrados = listaProductosCache.filter(p => {
+                const sku = String(p.SKU || "").toLowerCase();
+                const nombre = String(p.Nombre || "").toLowerCase();
+                const ubicacion = String(p.ID_Ubicacion || "").toUpperCase();
+
+                const coincideTexto = !query || sku.includes(query) || nombre.includes(query) || ubicacion.toLowerCase().includes(query);
+                const coincideUbicacion = !ubicacionFiltro || ubicacion === ubicacionFiltro;
+
+                return coincideTexto && coincideUbicacion;
+            });
+
+            construirTablaInventario(filtrados);
+        }
+
+        function exportarInventarioCSV() {
+            if (!listaProductosCache || listaProductosCache.length === 0) {
+                alert("No hay inventario para exportar.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "SKU;Nombre;Categoria;Ubicacion;Peso;Valor_Compra;Valor_Venta;Estado\n";
+
+            listaProductosCache.forEach(p => {
+                let sku = p.SKU || "";
+                let nombre = `"${(p.Nombre || "").replace(/"/g, '""')}"`;
+                let cat = p.ID_Categoria || "";
+                let ubicacion = p.ID_Ubicacion || "";
+                let peso = p.Peso || "0";
+                let vPiedra = Number(p.Valor_Piedra) || 0;
+                let vOro = Number(p.Valor_Oro) || 0;
+                let costo = (Number(p.Valor_Compra) || 0) > 0 ? Number(p.Valor_Compra) : (vPiedra + vOro);
+                let margen = Number(p.Porcentaje_Venta) || 100;
+                let desc = Number(p.Tiene_Descuento) || 0;
+                let base = vPiedra + ((parseFloat(String(peso).replace(',','.')) || 0) * valorOroDelDiaCache);
+                let vBase = base * (1 + (margen / 100));
+                let vFinal = Math.round(vBase - (vBase * (desc / 100)));
+
+                csvContent += [sku, nombre, cat, ubicacion, peso, costo, vFinal, "DISPONIBLE"].join(";") + "\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "inventario_fisico_manu_joyeros.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function renderizarModuloActualizacionOro(container) {
