@@ -383,12 +383,21 @@
                 res.data.forEach(m => {
                     let idMovVal = m.ID_Movimiento || m.id_movimiento || m.ID_Salida || m.id_salida || '-';
                     let skuVal = m.SKU || m.sku || '-';
+                    let motivoVal = m.Motivo || m.motivo || '-';
+
+                    // Corrección automática si quedaron invertidos en registros antiguos
+                    if (skuVal.includes("VENTA") || skuVal.includes("DEVOLUCION") || skuVal.includes("GARANTIA") || skuVal.includes("MERMA")) {
+                        let temp = skuVal;
+                        skuVal = motivoVal;
+                        motivoVal = temp;
+                    }
+
                     html += `<tr>
                         <td><strong>${idMovVal}</strong></td>
                         <td>${m.Fecha || m.fecha || '-'}</td>
                         <td><strong style="color: #d97706;">${skuVal}</strong></td>
                         <td>${m.Cantidad || m.cantidad || 1}</td>
-                        <td><span class="badge" style="background-color: #0f172a;">${m.Motivo || m.motivo || '-'}</span></td>
+                        <td><span class="badge" style="background-color: #0f172a;">${motivoVal}</span></td>
                         <td>${m.Usuario || m.usuario || '-'}</td>
                         <td>${m.Observaciones || m.observaciones || '-'}</td>
                     </tr>`;
@@ -417,8 +426,8 @@
                             <div class="form-group"><label>Cantidad *</label><input type="number" id="movCantidad" required min="1" value="1"></div>
                             <div class="form-group"><label>Motivo *</label><select id="movMotivo" required>
                                 ${tipoMov === 'ENTRADAS' ? 
-                                    '<option value="COMPRESA TALLER">COMPRA / TALLER</option><option value="DEVOLUCION CLIENTE">DEVOLUCIÓN DE CLIENTE</option><option value="AJUSTE INVENTARIO">AJUSTE POSITIVO DE INVENTARIO</option>' : 
-                                    '<option value="VENTA MOSTRADOR">VENTA DIRECTA MOSTRADOR</option><option value="GARANTIA">ENVÍO A GARANTÍA / REPARACIÓN</option><option value="MERMA / PERDIDA">MERMA / PÉRDIDA</option>'}
+                                    '<option value="COMPRA TALLER">COMPRA / TALLER</option><option value="DEVOLUCION CLIENTE">DEVOLUCIÓN DE CLIENTE</option><option value="AJUSTE INVENTARIO">AJUSTE POSITIVO DE INVENTARIO</option>' : 
+                                    '<option value="VENTA">VENTA</option><option value="DEVOLUCION">DEVOLUCIÓN</option><option value="GARANTIA">GARANTÍA / REPARACIÓN</option><option value="MERMA">MERMA / PÉRDIDA</option>'}
                             </select></div>
                             <div class="form-group"><label>Observaciones</label><textarea id="movObs" rows="3" placeholder="Detalles adicionales..."></textarea></div>
                         </div>
@@ -1058,6 +1067,9 @@
                 if (resSalidas && resSalidas.status === "success" && resSalidas.data) {
                     resSalidas.data.forEach(s => {
                         let skuSalida = s.SKU || s.sku || "";
+                        if (!skuSalida && s.Motivo && (s.Motivo.includes("AN") || s.Motivo.includes("JO"))) {
+                            skuSalida = s.Motivo; // Compatibilidad si quedó invertido en Sheets
+                        }
                         if (skuSalida) skusVendidosSet[skuSalida.trim().toUpperCase()] = true;
                     });
                 }
