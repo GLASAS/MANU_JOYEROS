@@ -193,7 +193,7 @@
         <nav class="sidebar-nav" id="sidebarNavContainer">
             <a href="#" class="nav-link active" onclick="cambiarVista('dashboard', event)">📊 Dashboard</a>
             <a href="#" class="nav-link" onclick="cambiarVista('productos', event)">💍 Productos</a>
-            <a href="catalogo.html" target="_blank" class="nav-link">🌐 Catálogo Web</a>
+            <a href="https://glasas.github.io/MANU_JOYEROS/catalogomanu" target="_blank" class="nav-link">🌐 Catálogo Web</a>
             <a href="#" class="nav-link" onclick="abrirModalQrCatalogo()">📱 QR Catálogo Web</a>
             <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('inventario', event)">📦 Inventario</a>
             <a href="#" class="nav-link nav-admin-only" onclick="cambiarVista('actualizacion_oro', event)">🪙 Actualización Oro</a>
@@ -367,7 +367,7 @@
             document.getElementById("modalSkuBarcodeLabel").textContent = "MANU JOYEROS";
             document.getElementById("modalDescLabel").textContent = "Escanee para ver el catálogo digital";
 
-            let catalogoUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + "catalogo.html";
+            let catalogoUrl = "https://glasas.github.io/MANU_JOYEROS/catalogomanu";
             let qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(catalogoUrl)}`;
             document.getElementById("imgQrGenerado").src = qrApiUrl;
 
@@ -889,11 +889,11 @@
                 <button class="btn-nuevo-producto" onclick="abrirFormularioNuevoProducto()">✨ + Nuevo</button>
                 <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);" onclick="abrirModalImportarCSV()">📂 Importar CSV</button>
                 <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);" onclick="exportarCatalogoCSV()">📥 Exportar Todo</button>
-                <a href="catalogo.html" target="_blank" class="btn-nuevo-producto" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); text-decoration: none;">🌐 Catálogo Web</a>
+                <a href="https://glasas.github.io/MANU_JOYEROS/catalogomanu" target="_blank" class="btn-nuevo-producto" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); text-decoration: none;">🌐 Catálogo Web</a>
                 <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);" onclick="abrirModalQrCatalogo()">📱 QR Catálogo</button>
                 <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);" onclick="eliminarProductosSeleccionados()">🗑️ Eliminar</button>
             ` : `
-                <a href="catalogo.html" target="_blank" class="btn-nuevo-producto" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); text-decoration: none;">🌐 Catálogo Web</a>
+                <a href="https://glasas.github.io/MANU_JOYEROS/catalogomanu" target="_blank" class="btn-nuevo-producto" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); text-decoration: none;">🌐 Catálogo Web</a>
                 <button class="btn-nuevo-producto" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);" onclick="abrirModalQrCatalogo()">📱 QR Catálogo</button>
             `;
 
