@@ -7,9 +7,45 @@
     <link rel="stylesheet" href="css/styles.css">
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; margin: 0; padding: 0; }
-        .catalog-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 30px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .catalog-logo { font-size: 1.8rem; font-weight: bold; letter-spacing: 3px; margin-bottom: 5px; }
-        .catalog-subtitle { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; color: #d97706; font-weight: 600; }
+        
+        .catalog-header { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            color: #ffffff; 
+            padding: 25px 20px; 
+            text-align: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .catalog-logo-container { 
+            background-color: #ffffff; 
+            padding: 6px; 
+            border-radius: 8px; 
+            display: inline-block; 
+            width: 100%; 
+            max-width: 180px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
+        }
+
+        .catalog-logo-img { 
+            width: 100%; 
+            height: auto; 
+            display: block; 
+            object-fit: contain; 
+        }
+
+        .catalog-subtitle { 
+            font-size: 0.80rem; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            color: #d97706; 
+            font-weight: 600; 
+            margin-top: 4px;
+        }
         
         .catalog-container { max-width: 1200px; margin: 30px auto; padding: 0 15px; }
         
@@ -44,7 +80,9 @@
 <body>
 
     <header class="catalog-header">
-        <div class="catalog-logo">MANU JOYEROS</div>
+        <div class="catalog-logo-container">
+            <img src="manu_joyeros.jpg" alt="MANU JOYEROS" class="catalog-logo-img">
+        </div>
         <div class="catalog-subtitle">Catálogo Digital Oficial de Alta Joyería</div>
     </header>
 
