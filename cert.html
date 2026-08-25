@@ -49,13 +49,14 @@
             <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
         </div>
 
-        <div class="cert-version-label" id="lblCertVersion">Versión V3.0</div>
+        <div class="cert-version-label" id="lblCertVersion">MANU JOYEROS</div>
     </div>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
+            // Sincronización automática de versión con config.js en todos los módulos
             if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
                 document.getElementById("lblCertVersion").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA || 'MANU JOYEROS'}`;
             }
@@ -87,9 +88,9 @@
                     API.llamar("obtenerProductos", {}, "GET")
                 ]);
 
-                let valorOroDia = 250000;
+                let valorOroDiaLocal = 250000;
                 if (resOro && resOro.status === "success" && resOro.valor_oro_dia) {
-                    valorOroDia = Number(resOro.valor_oro_dia);
+                    valorOroDiaLocal = Number(resOro.valor_oro_dia);
                 }
 
                 if (!resProd || resProd.status !== "success" || !resProd.data) {
@@ -103,7 +104,7 @@
                     return;
                 }
 
-                // Extracción exacta idéntica a la tabla principal del Dashboard
+                // Cálculo idéntico y sincronizado con el Dashboard
                 let valPiedraItem = (producto.Valor_Piedra !== undefined && producto.Valor_Piedra !== null && String(producto.Valor_Piedra).trim() !== "") ? Number(producto.Valor_Piedra) : 0;
                 if (isNaN(valPiedraItem)) valPiedraItem = 0;
 
@@ -112,8 +113,6 @@
 
                 let valorCompraDirecto = (producto.Valor_Compra !== undefined && producto.Valor_Compra !== null && String(producto.Valor_Compra).trim() !== "") ? Number(producto.Valor_Compra) : 0;
                 if (isNaN(valorCompraDirecto)) valorCompraDirecto = 0;
-
-                let costo = valorCompraDirecto > 0 ? valorCompraDirecto : (valOroItem + valPiedraItem);
 
                 let margen = (producto.Porcentaje_Venta !== undefined && producto.Porcentaje_Venta !== null && String(producto.Porcentaje_Venta).trim() !== "") ? Number(producto.Porcentaje_Venta) : 100;
                 if (isNaN(margen)) margen = 100;
@@ -124,7 +123,7 @@
                 let pesoCrudo = producto.Peso !== undefined && producto.Peso !== null && String(producto.Peso).trim() !== "" ? producto.Peso : (producto.peso !== undefined && producto.peso !== null && String(producto.peso).trim() !== "" ? producto.peso : 0);
                 let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
 
-                let baseVentaCalculada = valPiedraItem + (pesoItem * valorOroDelDiaCache);
+                let baseVentaCalculada = valPiedraItem + (pesoItem * valorOroDiaLocal);
                 let precioBase = baseVentaCalculada * (1 + (margen / 100));
                 let valorVenta = precioBase - (precioBase * (descPct / 100));
                 if (isNaN(valorVenta)) valorVenta = 0;
@@ -156,7 +155,7 @@
 
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (355) 8123125<br>
+                        NIT: 900.000.000-1 • Tel: +57 (000) 8123125<br>
                         Dirección Principal: Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
