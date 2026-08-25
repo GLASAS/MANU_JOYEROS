@@ -97,11 +97,11 @@
             .content-body { padding: 2rem; }
             .form-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         }
-        select, input[type="text"], input[type="password"], input[type="number"], input[type="file"], input[type="date"] {
+        select, input[type="text"], input[type="password"], input[type="number"], input[type="file"], input[type="date"], textarea {
             width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;
             background-color: #fff; outline: none; transition: border-color 0.2s;
         }
-        select:focus, input:focus { border-color: #3b82f6; }
+        select:focus, input:focus, textarea:focus { border-color: #3b82f6; }
 
         .catalog-toolbar { display: flex; align-items: center; gap: 8px; margin-top: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
         .btn-discreet-refresh {
@@ -350,10 +350,101 @@
             else if(vista === 'productos') { renderizarModuloProductos(content); }
             else if(vista === 'inventario') { renderizarModuloInventario(content); }
             else if(vista === 'actualizacion_oro') { renderizarModuloActualizacionOro(content); }
+            else if(vista === 'entradas') { renderizarModuloEntradasSalidas(content, 'ENTRADAS'); }
+            else if(vista === 'salidas') { renderizarModuloEntradasSalidas(content, 'SALIDAS'); }
             else if(vista === 'usuarios') { renderizarModuloUsuarios(content); }
             else if(vista === 'cambiar_password') { renderizarModuloCambiarPassword(content); }
             else {
                 content.innerHTML = `<div class="card"><h3>Módulo de ${vista.toUpperCase()}</h3><p>Módulo configurado en la arquitectura del sistema.</p></div>`;
+            }
+        }
+
+        async function renderizarModuloEntradasSalidas(container, tipoMovimiento) {
+            let titulo = tipoMovimiento === 'ENTRADAS' ? '📥 Registro de Entradas al Inventario' : '📤 Registro de Salidas del Inventario';
+            let btnColor = tipoMovimiento === 'ENTRADAS' ? '#059669' : '#dc2626';
+
+            container.innerHTML = `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #0f172a; margin: 0;">${titulo}</h3>
+                        <button class="btn-nuevo-producto" style="background: ${btnColor};" onclick="abrirFormularioMovimiento('${tipoMovimiento}')">+ Registrar ${tipoMovimiento === 'ENTRADAS' ? 'Entrada' : 'Salida'}</button>
+                    </div>
+                    <div id="tablaMovimientosContenedor">Cargando registros...</div>
+                </div>`;
+
+            const res = await API.llamar(tipoMovimiento === 'ENTRADAS' ? "obtenerEntradas" : "obtenerSalidas", {}, "GET");
+            const contenedor = document.getElementById("tablaMovimientosContenedor");
+
+            if (res && res.status === "success" && res.data && res.data.length > 0) {
+                let html = `<div class="table-container"><table class="data-table"><thead><tr>
+                    <th>ID Movimiento</th><th>Fecha</th><th>SKU / Referencia</th><th>Cantidad</th><th>Motivo</th><th>Usuario</th><th>Observaciones</th>
+                </tr></thead><tbody>`;
+
+                res.data.forEach(m => {
+                    html += `<tr>
+                        <td><strong>${m.ID_Movimiento || m.id_movimiento || '-'}</strong></td>
+                        <td>${m.Fecha || m.fecha || '-'}</td>
+                        <td><strong style="color: #d97706;">${m.SKU || m.sku || '-'}</strong></td>
+                        <td>${m.Cantidad || m.cantidad || 1}</td>
+                        <td><span class="badge" style="background-color: #0f172a;">${m.Motivo || m.motivo || '-'}</span></td>
+                        <td>${m.Usuario || m.usuario || '-'}</td>
+                        <td>${m.Observaciones || m.observaciones || '-'}</td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay registros de ${tipoMovimiento.toLowerCase()} en el sistema.</p>`;
+            }
+        }
+
+        async function abrirFormularioMovimiento(tipoMov) {
+            if (!listaProductosCache || listaProductosCache.length === 0) {
+                const res = await API.llamar("obtenerProductos", {}, "GET");
+                if (res && res.status === "success") listaProductosCache = res.data || [];
+            }
+
+            let optionsProductos = listaProductosCache.map(p => `<option value="${p.SKU}">${p.SKU} - ${p.Nombre}</option>`).join('');
+
+            document.getElementById("contentBody").innerHTML = `
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #0f172a;">Registrar ${tipoMov === 'ENTRADAS' ? 'Entrada' : 'Salida'} de Inventario</h3>
+                    <form id="formMovimiento" onsubmit="guardarMovimiento(event, '${tipoMov}')">
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-group"><label>Seleccionar Producto (SKU) *</label><select id="movSku" required><option value="">Seleccione joya...</option>${optionsProductos}</select></div>
+                            <div class="form-group"><label>Cantidad *</label><input type="number" id="movCantidad" required min="1" value="1"></div>
+                            <div class="form-group"><label>Motivo *</label><select id="movMotivo" required>
+                                ${tipoMov === 'ENTRADAS' ? 
+                                    '<option value="COMPRESA TALLER">COMPRA / TALLER</option><option value="DEVOLUCION CLIENTE">DEVOLUCIÓN DE CLIENTE</option><option value="AJUSTE INVENTARIO">AJUSTE POSITIVO DE INVENTARIO</option>' : 
+                                    '<option value="VENTA MOSTRADOR">VENTA DIRECTA MOSTRADOR</option><option value="GARANTIA">ENVÍO A GARANTÍA / REPARACIÓN</option><option value="MERMA / PERDIDA">MERMA / PÉRDIDA</option>'}
+                            </select></div>
+                            <div class="form-group"><label>Observaciones</label><textarea id="movObs" rows="3" placeholder="Detalles adicionales..."></textarea></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="cambiarVista('${tipoMov.toLowerCase()}', event)">Cancelar</button>
+                            <button type="submit" class="btn-form-save">Guardar Registro</button>
+                        </div>
+                    </form>
+                </div>`;
+        }
+
+        async function guardarMovimiento(event, tipoMov) {
+            event.preventDefault();
+            const data = {
+                action: tipoMov === 'ENTRADAS' ? 'registrarEntrada' : 'registrarSalida',
+                sku: document.getElementById("movSku").value,
+                cantidad: Number(document.getElementById("movCantidad").value) || 1,
+                motivo: document.getElementById("movMotivo").value,
+                observaciones: document.getElementById("movObs").value.trim(),
+                usuario: usuarioActual.usuario
+            };
+
+            const res = await API.llamar(data.action, data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                cambiarVista(tipoMov.toLowerCase());
+            } else {
+                alert("Error al registrar: " + (res ? res.message : "Desconocido"));
             }
         }
 
