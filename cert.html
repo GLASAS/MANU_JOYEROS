@@ -81,6 +81,7 @@
                     return;
                 }
 
+                // Fórmula corregida e idéntica al Dashboard: ((Piedra + (Peso * OroDia)) * (1 + (Margen / 100))) - Descuento
                 let valPiedra = Number(producto.Valor_Piedra || 0) || 0;
                 let peso = parseFloat(String(producto.Peso || producto.peso || "0").replace(',', '.')) || 0;
                 let margen = Number(producto.Porcentaje_Venta || 100) || 100;
