@@ -122,7 +122,8 @@
 
     <footer class="catalog-footer">
         <strong>MANU JOYEROS</strong> • NIT: 900.000.000-1 • Bogotá D.C., Colombia<br>
-        <em>Joyas que trascienden el tiempo</em>
+        <em>Joyas que trascienden el tiempo</em><br>
+        <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 6px; display: inline-block;">Versión V1.355 • MANU JOYEROS</span>
     </footer>
 
     <script src="js/config.js"></script>
@@ -205,11 +206,11 @@
                 let skuToken = btoa(sku);
                 let certLink = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuToken}`;
                 
-                // Enlace de WhatsApp directo para solicitar la fabricación de la pieza
-                let textoWp = encodeURIComponent(`Hola MANU JOYEROS, me interesa este modelo (SOLD) para solicitar su fabricación:\n\n*SKU:* ${sku}\n*Modelo:* ${nombre}\n*Material:* ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}\n*Foto de referencia:* ${foto || 'No disponible'}`);
-                let whatsappLink = `https://wa.me/573008123125?text=${textoWp}`;
+                // Enlace de WhatsApp directo con el número correcto (+573208123125) indicando la referencia
+                let textoWp = encodeURIComponent(`Hola MANU JOYEROS, me interesa este modelo (SOLD) para solicitar su fabricación:\n\n*SKU:* ${sku}\n*Modelo:* ${nombre}\n*Material:* ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}\n*(Nota: Adjunto la foto de la joya de referencia).*`);
+                let whatsappLink = `https://wa.me/573208123125?text=${textoWp}`;
 
-                // Si está vendido, se muestra SOLD neutro/elegante y el botón de WhatsApp directo para pedirlo sin "Ver Detalles"
+                // Si está vendido, muestra SOLD y el botón de WhatsApp con el número del certificado
                 let seccionInferiorHtml = esVendido ? `
                     <div>
                         <span class="price-label-cat">Estado</span>
