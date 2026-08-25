@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .cert-card { background: #ffffff; width: 100%; max-width: 480px; padding: 30px 30px 40px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px solid #e2e8f0; text-align: center; position: relative; }
+        .cert-card { background: #ffffff; width: 100%; max-width: 480px; padding: 30px 30px 42px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px solid #e2e8f0; text-align: center; position: relative; }
         .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
         .cert-logo { font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; color: #0f172a; margin-bottom: 4px; }
         .cert-subtitle { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: #d97706; font-weight: 600; }
@@ -49,7 +49,7 @@
             <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
         </div>
 
-        <div class="cert-version-label" id="lblCertVersion">Versión V3.0</div>
+        <div class="cert-version-label" id="lblCertVersion">Versión V1.706</div>
     </div>
 
     <script src="js/config.js"></script>
@@ -90,21 +90,19 @@
                     return;
                 }
 
-                // Cálculo exacto unificado con la tabla de productos del Dashboard
-                let valPiedra = Number(producto.Valor_Piedra || producto.valor_piedra || 0) || 0;
-                let valOroCompra = Number(producto.Valor_Oro || producto.valor_oro || 0) || 0;
-                let valorCompraDirecto = Number(producto.Valor_Compra || producto.valor_compra || 0) || 0;
-                
-                let costoBase = valorCompraDirecto > 0 ? valorCompraDirecto : (valOroCompra + valPiedra);
-
+                // Extracción estricta basada en la estructura de columnas de Google Sheets
                 let peso = parseFloat(String(producto.Peso || producto.peso || "0").replace(',', '.')) || 0;
+                let valPiedra = Number(producto.Valor_Piedra || producto.valor_piedra || 0) || 0;
                 let margen = Number(producto.Porcentaje_Venta || producto.porcentaje_venta || 100) || 100;
                 let desc = Number(producto.Tiene_Descuento || producto.tiene_descuento || 0) || 0;
 
-                // Si ya viene un costo base fijo registrado en la base de datos, lo usamos como base, de lo contrario calculamos con el oro del día
-                let baseVenta = costoBase > 0 ? costoBase : (valPiedra + (peso * valorOroDia));
-                let precioBase = baseVenta * (1 + (margen / 100));
-                let valorVentaFinal = Math.round(precioBase - (precioBase * (desc / 100)));
+                // Fórmula exacta solicitada: (Valor Oro del Día * Peso) + Valor Piedra
+                let costoOroCalculado = peso * valorOroDia;
+                let baseCostoTotal = costoOroCalculado + valPiedra;
+
+                // Aplicando margen y descuento para obtener la Venta Final
+                let precioBaseVenta = baseCostoTotal * (1 + (margen / 100));
+                let valorVentaFinal = Math.round(precioBaseVenta - (precioBaseVenta * (desc / 100)));
 
                 let fotoSrc = producto.Foto || producto.foto || "";
                 let fotoHtml = fotoSrc ? `<img src="${fotoSrc}" alt="Joya Certificada">` : `<span style="font-size: 3rem;">💍</span>`;
