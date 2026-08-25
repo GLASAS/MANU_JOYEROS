@@ -55,13 +55,37 @@
 
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         
-        .product-card { background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+        .product-card { background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.04); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
         .product-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
         
         .product-img-box { width: 100%; height: 240px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
         .product-img-box img { width: 100%; height: 100%; object-fit: cover; }
         
-        .sku-tag { position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(4px); }
+        .sku-tag { position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(4px); z-index: 2; }
+
+        /* Estilo de la Marca de Agua SOLD */
+        .sold-watermark {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+        .sold-badge-text {
+            border: 3px solid #ef4444;
+            color: #ef4444;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            padding: 8px 24px;
+            transform: rotate(-15deg);
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.85);
+        }
 
         .product-info { padding: 18px; display: flex; flex-direction: column; flex: 1; }
         .product-title { font-size: 1rem; font-weight: bold; color: #0f172a; margin-bottom: 6px; line-height: 1.4; }
@@ -179,6 +203,16 @@
                 let foto = p.Foto || p.foto || "";
                 let fotoHtml = foto ? `<img src="${foto}" alt="${nombre}" loading="lazy">` : `<span style="font-size: 3.5rem;">💍</span>`;
 
+                // Validar si el producto está vendido o no disponible
+                let estadoItem = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
+                let esVendido = (estadoItem !== "DISPONIBLE" && estadoItem !== "" && estadoItem !== "-");
+                
+                let watermarkHtml = esVendido ? `
+                    <div class="sold-watermark">
+                        <div class="sold-badge-text">SOLD</div>
+                    </div>
+                ` : '';
+
                 let skuToken = btoa(sku);
                 let certLink = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuToken}`;
 
@@ -187,6 +221,7 @@
                         <div class="product-img-box">
                             <span class="sku-tag">SKU: ${sku}</span>
                             ${fotoHtml}
+                            ${watermarkHtml}
                         </div>
                         <div class="product-info">
                             <div class="product-title">${nombre}</div>
