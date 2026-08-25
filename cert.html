@@ -82,15 +82,7 @@
             }
 
             try {
-                const [resOro, resProd] = await Promise.all([
-                    API.llamar("obtenerValorOroDia", {}, "GET"),
-                    API.llamar("obtenerProductos", {}, "GET")
-                ]);
-
-                let valorOroDiaLocal = 250000;
-                if (resOro && resOro.status === "success" && resOro.valor_oro_dia) {
-                    valorOroDiaLocal = Number(resOro.valor_oro_dia);
-                }
+                const resProd = await API.llamar("obtenerProductos", {}, "GET");
 
                 if (!resProd || resProd.status !== "success" || !resProd.data) {
                     throw new Error("No se pudo conectar con la base de datos.");
@@ -103,12 +95,17 @@
                     return;
                 }
 
-                // Corrección exacta sincronizada con la tabla del Dashboard (incluyendo Valor_Piedra, Valor_Oro y Peso)
+                // Cálculo exacto sincronizado con la tabla principal (usando Valor_Piedra, Valor_Oro directo, Porcentaje_Venta y Descuento)
                 let valPiedraItem = (producto.Valor_Piedra !== undefined && producto.Valor_Piedra !== null && String(producto.Valor_Piedra).trim() !== "") ? Number(producto.Valor_Piedra) : 0;
                 if (isNaN(valPiedraItem)) valPiedraItem = 0;
 
                 let valOroItem = (producto.Valor_Oro !== undefined && producto.Valor_Oro !== null && String(producto.Valor_Oro).trim() !== "") ? Number(producto.Valor_Oro) : 0;
                 if (isNaN(valOroItem)) valOroItem = 0;
+
+                let valorCompraDirecto = (producto.Valor_Compra !== undefined && producto.Valor_Compra !== null && String(producto.Valor_Compra).trim() !== "") ? Number(producto.Valor_Compra) : 0;
+                if (isNaN(valorCompraDirecto)) valorCompraDirecto = 0;
+
+                let costoTotal = valorCompraDirecto > 0 ? valorCompraDirecto : (valOroItem + valPiedraItem);
 
                 let margen = (producto.Porcentaje_Venta !== undefined && producto.Porcentaje_Venta !== null && String(producto.Porcentaje_Venta).trim() !== "") ? Number(producto.Porcentaje_Venta) : 100;
                 if (isNaN(margen)) margen = 100;
@@ -116,15 +113,14 @@
                 let descPct = (producto.Tiene_Descuento !== undefined && producto.Tiene_Descuento !== null && String(producto.Tiene_Descuento).trim() !== "") ? Number(producto.Tiene_Descuento) : 0;
                 if (isNaN(descPct)) descPct = 0;
 
-                let pesoCrudo = producto.Peso !== undefined && producto.Peso !== null && String(producto.Peso).trim() !== "" ? producto.Peso : (producto.peso !== undefined && producto.peso !== null && String(producto.peso).trim() !== "" ? producto.peso : 0);
-                let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
-
-                let baseVentaCalculada = valPiedraItem + valOroItem + (pesoItem * valorOroDiaLocal);
-                let precioBase = baseVentaCalculada * (1 + (margen / 100));
+                let precioBase = costoTotal * (1 + (margen / 100));
                 let valorVenta = precioBase - (precioBase * (descPct / 100));
                 if (isNaN(valorVenta)) valorVenta = 0;
 
                 let valorVentaFinal = Math.round(valorVenta);
+
+                let pesoCrudo = producto.Peso !== undefined && producto.Peso !== null && String(producto.Peso).trim() !== "" ? producto.Peso : (producto.peso !== undefined && producto.peso !== null && String(producto.peso).trim() !== "" ? producto.peso : 0);
+                let pesoItem = parseFloat(String(pesoCrudo).replace(',', '.')) || 0;
 
                 let fotoSrc = producto.Foto || producto.foto || "";
                 let fotoHtml = fotoSrc ? `<img src="${fotoSrc}" alt="Joya Certificada">` : `<span style="font-size: 3rem;">💍</span>`;
@@ -151,7 +147,7 @@
 
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (500) 8123125<br>
+                        NIT: 900.000.000-1 • Tel: +57 (777) 8123125<br>
                         Dirección Principal: Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
