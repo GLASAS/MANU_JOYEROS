@@ -63,6 +63,51 @@
         
         .sku-tag { position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(4px); z-index: 2; }
 
+        /* Insignia de descuento grande y profesional */
+        .discount-badge-pro {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #ffffff;
+            border: 2px solid #dc2626;
+            border-radius: 10px;
+            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+            z-index: 3;
+            text-align: center;
+            min-width: 65px;
+        }
+        .discount-top-text {
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 0.55rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .discount-main-num {
+            color: #dc2626;
+            font-size: 1.25rem;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+        .discount-bottom-text {
+            color: #dc2626;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
         .product-info { padding: 18px; display: flex; flex-direction: column; flex: 1; }
         .product-title { font-size: 1rem; font-weight: bold; color: #0f172a; margin-bottom: 6px; line-height: 1.4; }
         .product-details { font-size: 0.80rem; color: #64748b; margin-bottom: 15px; line-height: 1.4; flex: 1; }
@@ -71,19 +116,29 @@
         .price-label-cat { font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; font-weight: bold; display: block; }
         .price-val-cat { font-size: 1.2rem; font-weight: bold; color: #10b981; }
         
-        /* Estilo elegante, sobrio, con borde fino y color azul medianoche para SOLD */
-        .sold-tag-bottom {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #f8fafc;
-            font-size: 0.95rem;
-            font-weight: 800;
+        /* Estilos para precios con descuento */
+        .price-old { font-size: 0.85rem; color: #94a3b8; text-decoration: line-through; margin-right: 6px; font-weight: 600; }
+        .price-val-discount { font-size: 1.2rem; font-weight: bold; color: #dc2626; }
+
+        /* Insignia SOLD inferior con el mismo formato imponente y llamativo */
+        .sold-badge-pro {
+            background: #ffffff;
+            border: 2px solid #0f172a;
+            border-radius: 8px;
+            padding: 4px 14px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.2);
+            text-align: center;
+        }
+        .sold-main-text {
+            color: #0f172a;
+            font-size: 1.1rem;
+            font-weight: 900;
+            line-height: 1.1;
             letter-spacing: 3px;
-            padding: 6px 16px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            border: 1px solid rgba(217, 119, 6, 0.5);
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
-            display: inline-block;
         }
 
         /* Botón de Certificado para productos disponibles */
@@ -195,10 +250,21 @@
                 let baseVentaCalculada = valPiedra + (pesoItem * valorOroDiaGlobal);
                 let precioBase = baseVentaCalculada * (1 + (margen / 100));
                 let valorVenta = precioBase - (precioBase * (descPct / 100));
+                let precioBaseFinal = Math.round(isNaN(precioBase) ? 0 : precioBase);
                 let valorVentaFinal = Math.round(isNaN(valorVenta) ? 0 : valorVenta);
 
                 let foto = p.Foto || p.foto || "";
                 let fotoHtml = foto ? `<img src="${foto}" alt="${nombre}" loading="lazy">` : `<span style="font-size: 3.5rem;">💍</span>`;
+
+                // Validar si el producto tiene descuento
+                let tieneDescuento = descPct > 0;
+                let discountTagHtml = tieneDescuento ? `
+                    <div class="discount-badge-pro">
+                        <span class="discount-top-text">UP TO</span>
+                        <span class="discount-main-num">${descPct}%</span>
+                        <span class="discount-bottom-text">OFF</span>
+                    </div>
+                ` : '';
 
                 // Validar si el producto está vendido o no disponible
                 let estadoItem = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
@@ -207,29 +273,48 @@
                 let skuToken = btoa(sku);
                 let certLink = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuToken}`;
                 
-                // Enlace de WhatsApp directo con el mensaje "Quiero uno igual" y el número correcto de la tienda
+                // Enlace de WhatsApp directo con el mensaje "Quiero uno igual"
                 let textoWp = encodeURIComponent(`Hola MANU JOYEROS, vi esta joya en el catálogo digital (marcada como SOLD) y quiero uno igual:\n\n*SKU:* ${sku}\n*Modelo:* ${nombre}\n*Material:* ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}\n*(Nota: Adjunto la foto de la joya de referencia).*`);
                 let whatsappLink = `https://wa.me/573208123125?text=${textoWp}`;
 
-                // Si está vendido, muestra SOLD y el botón verde de WhatsApp "Quiero uno igual"
-                let seccionInferiorHtml = esVendido ? `
-                    <div>
-                        <span class="price-label-cat">Estado</span>
-                        <span class="sold-tag-bottom">SOLD</span>
-                    </div>
-                    <a href="${whatsappLink}" target="_blank" class="btn-whatsapp-link" title="Solicitar Fabricación">💬 Quiero uno igual</a>
-                ` : `
-                    <div>
-                        <span class="price-label-cat">Valor Comercial</span>
-                        <span class="price-val-cat">$${valorVentaFinal.toLocaleString()} COP</span>
-                    </div>
-                    <a href="${certLink}" target="_blank" class="btn-cert-link">📜 Certificado</a>
-                `;
+                // Renderizado dinámico de la sección inferior
+                let seccionInferiorHtml = '';
+                if (esVendido) {
+                    seccionInferiorHtml = `
+                        <div>
+                            <span class="price-label-cat">Estado</span>
+                            <div class="sold-badge-pro">
+                                <span class="sold-main-text">SOLD</span>
+                            </div>
+                        </div>
+                        <a href="${whatsappLink}" target="_blank" class="btn-whatsapp-link" title="Solicitar Fabricación">💬 Quiero uno igual</a>
+                    `;
+                } else if (tieneDescuento) {
+                    seccionInferiorHtml = `
+                        <div>
+                            <span class="price-label-cat">Oferta Especial</span>
+                            <div>
+                                <span class="price-old">$${precioBaseFinal.toLocaleString()}</span>
+                                <span class="price-val-discount">$${valorVentaFinal.toLocaleString()} COP</span>
+                            </div>
+                        </div>
+                        <a href="${certLink}" target="_blank" class="btn-cert-link">📜 Certificado</a>
+                    `;
+                } else {
+                    seccionInferiorHtml = `
+                        <div>
+                            <span class="price-label-cat">Valor Comercial</span>
+                            <span class="price-val-cat">$${valorVentaFinal.toLocaleString()} COP</span>
+                        </div>
+                        <a href="${certLink}" target="_blank" class="btn-cert-link">📜 Certificado</a>
+                    `;
+                }
 
                 html += `
                     <div class="product-card">
                         <div class="product-img-box">
                             <span class="sku-tag">SKU: ${sku}</span>
+                            ${discountTagHtml}
                             ${fotoHtml}
                         </div>
                         <div class="product-info">
