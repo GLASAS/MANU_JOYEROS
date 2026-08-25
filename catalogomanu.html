@@ -63,30 +63,6 @@
         
         .sku-tag { position: absolute; top: 10px; left: 10px; background: rgba(15, 23, 42, 0.85); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(4px); z-index: 2; }
 
-        /* Estilo de la Marca de Agua SOLD */
-        .sold-watermark {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.55);
-            backdrop-filter: blur(2px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-        }
-        .sold-badge-text {
-            border: 3px solid #ef4444;
-            color: #ef4444;
-            font-size: 2rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            padding: 8px 24px;
-            transform: rotate(-15deg);
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            background: rgba(255, 255, 255, 0.85);
-        }
-
         .product-info { padding: 18px; display: flex; flex-direction: column; flex: 1; }
         .product-title { font-size: 1rem; font-weight: bold; color: #0f172a; margin-bottom: 6px; line-height: 1.4; }
         .product-details { font-size: 0.80rem; color: #64748b; margin-bottom: 15px; line-height: 1.4; flex: 1; }
@@ -95,8 +71,27 @@
         .price-label-cat { font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; font-weight: bold; display: block; }
         .price-val-cat { font-size: 1.2rem; font-weight: bold; color: #10b981; }
         
+        /* Estilo elegante, sobrio, con borde fino y color azul medianoche para SOLD */
+        .sold-tag-bottom {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            padding: 6px 16px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            border: 1px solid rgba(217, 119, 6, 0.5);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+            display: inline-block;
+        }
+
         .btn-cert-link { background: #0f172a; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s; }
         .btn-cert-link:hover { background: #1e293b; }
+
+        /* Botón de WhatsApp estilizado para fabricar nuevamente */
+        .btn-whatsapp-link { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2); }
+        .btn-whatsapp-link:hover { background: #059669; }
 
         .catalog-footer { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; margin-top: 40px; }
     </style>
@@ -206,22 +201,34 @@
                 // Validar si el producto está vendido o no disponible
                 let estadoItem = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
                 let esVendido = (estadoItem !== "DISPONIBLE" && estadoItem !== "" && estadoItem !== "-");
-                
-                let watermarkHtml = esVendido ? `
-                    <div class="sold-watermark">
-                        <div class="sold-badge-text">SOLD</div>
-                    </div>
-                ` : '';
 
                 let skuToken = btoa(sku);
                 let certLink = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuToken}`;
+                
+                // Enlace de WhatsApp directo para solicitar la fabricación de la pieza
+                let textoWp = encodeURIComponent(`Hola MANU JOYEROS, me interesa este modelo (SOLD) para solicitar su fabricación:\n\n*SKU:* ${sku}\n*Modelo:* ${nombre}\n*Material:* ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}\n*Foto de referencia:* ${foto || 'No disponible'}`);
+                let whatsappLink = `https://wa.me/573008123125?text=${textoWp}`;
+
+                // Si está vendido, se muestra SOLD neutro/elegante y el botón de WhatsApp directo para pedirlo sin "Ver Detalles"
+                let seccionInferiorHtml = esVendido ? `
+                    <div>
+                        <span class="price-label-cat">Estado</span>
+                        <span class="sold-tag-bottom">SOLD</span>
+                    </div>
+                    <a href="${whatsappLink}" target="_blank" class="btn-whatsapp-link" title="Solicitar Fabricación">💬 Mandar a Hacer</a>
+                ` : `
+                    <div>
+                        <span class="price-label-cat">Valor Comercial</span>
+                        <span class="price-val-cat">$${valorVentaFinal.toLocaleString()} COP</span>
+                    </div>
+                    <a href="${certLink}" target="_blank" class="btn-cert-link">📜 Certificado</a>
+                `;
 
                 html += `
                     <div class="product-card">
                         <div class="product-img-box">
                             <span class="sku-tag">SKU: ${sku}</span>
                             ${fotoHtml}
-                            ${watermarkHtml}
                         </div>
                         <div class="product-info">
                             <div class="product-title">${nombre}</div>
@@ -229,11 +236,7 @@
                                 Material: ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}
                             </div>
                             <div class="product-price-row">
-                                <div>
-                                    <span class="price-label-cat">Valor Comercial</span>
-                                    <span class="price-val-cat">$${valorVentaFinal.toLocaleString()} COP</span>
-                                </div>
-                                <a href="${certLink}" target="_blank" class="btn-cert-link">📜 Certificado</a>
+                                ${seccionInferiorHtml}
                             </div>
                         </div>
                     </div>
