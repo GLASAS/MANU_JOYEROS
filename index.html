@@ -381,10 +381,12 @@
                 </tr></thead><tbody>`;
 
                 res.data.forEach(m => {
+                    let idMovVal = m.ID_Movimiento || m.id_movimiento || m.ID_Salida || m.id_salida || '-';
+                    let skuVal = m.SKU || m.sku || '-';
                     html += `<tr>
-                        <td><strong>${m.ID_Movimiento || m.id_movimiento || '-'}</strong></td>
+                        <td><strong>${idMovVal}</strong></td>
                         <td>${m.Fecha || m.fecha || '-'}</td>
-                        <td><strong style="color: #d97706;">${m.SKU || m.sku || '-'}</strong></td>
+                        <td><strong style="color: #d97706;">${skuVal}</strong></td>
                         <td>${m.Cantidad || m.cantidad || 1}</td>
                         <td><span class="badge" style="background-color: #0f172a;">${m.Motivo || m.motivo || '-'}</span></td>
                         <td>${m.Usuario || m.usuario || '-'}</td>
@@ -1050,7 +1052,22 @@
                 }
             }
 
-            listaProductosCache = productos || [];
+            let skusVendidosSet = {};
+            try {
+                const resSalidas = await API.llamar("obtenerSalidas", {}, "GET");
+                if (resSalidas && resSalidas.status === "success" && resSalidas.data) {
+                    resSalidas.data.forEach(s => {
+                        let skuSalida = s.SKU || s.sku || "";
+                        if (skuSalida) skusVendidosSet[skuSalida.trim().toUpperCase()] = true;
+                    });
+                }
+            } catch(e) {}
+
+            listaProductosCache = (productos || []).filter(p => {
+                let skuProd = String(p.SKU || p.sku || p.Ref || "").trim().toUpperCase();
+                return !skusVendidosSet[skuProd];
+            });
+
             listaProductosFiltradosCache = listaProductosCache;
             paginaActual = 1;
             renderizarTablaProductosPaginada();
@@ -1108,7 +1125,7 @@
             const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
 
             if (listaProductosFiltradosCache.length === 0) { 
-                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No se encontraron joyas que coincidan con la búsqueda.</p>`;
+                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No se encontraron joyas disponibles que coincidan con la búsqueda.</p>`;
                 return; 
             }
 
