@@ -86,12 +86,9 @@
             display: inline-block;
         }
 
+        /* Estilo unificado para los botones de acción */
         .btn-cert-link { background: #0f172a; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s; }
         .btn-cert-link:hover { background: #1e293b; }
-
-        /* Botón de WhatsApp estilizado para fabricar nuevamente */
-        .btn-whatsapp-link { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2); }
-        .btn-whatsapp-link:hover { background: #059669; }
 
         .catalog-footer { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; margin-top: 40px; }
     </style>
@@ -206,17 +203,17 @@
                 let skuToken = btoa(sku);
                 let certLink = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuToken}`;
                 
-                // Enlace de WhatsApp directo con el número correcto (+573208123125) indicando la referencia
-                let textoWp = encodeURIComponent(`Hola MANU JOYEROS, me interesa este modelo (SOLD) para solicitar su fabricación:\n\n*SKU:* ${sku}\n*Modelo:* ${nombre}\n*Material:* ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}\n*(Nota: Adjunto la foto de la joya de referencia).*`);
+                // Enlace de WhatsApp directo con el mensaje "Quiero uno igual"
+                let textoWp = encodeURIComponent(`Hola MANU JOYEROS, vi esta joya en el catálogo digital (marcada como SOLD) y quiero uno igual:\n\n*SKU:* ${sku}\n*Modelo:* ${nombre}\n*Material:* ${material} ${color ? '• ' + color : ''} ${pesoItem > 0 ? '• ' + pesoItem + 'g' : ''}\n*(Nota: Adjunto la foto de la joya de referencia).*`);
                 let whatsappLink = `https://wa.me/573208123125?text=${textoWp}`;
 
-                // Si está vendido, muestra SOLD y el botón de WhatsApp con el número del certificado
+                // Si está vendido, muestra SOLD y el botón "Quiero uno igual"
                 let seccionInferiorHtml = esVendido ? `
                     <div>
                         <span class="price-label-cat">Estado</span>
                         <span class="sold-tag-bottom">SOLD</span>
                     </div>
-                    <a href="${whatsappLink}" target="_blank" class="btn-whatsapp-link" title="Solicitar Fabricación">💬 Mandar a Hacer</a>
+                    <a href="${whatsappLink}" target="_blank" class="btn-cert-link" title="Solicitar Fabricación">💬 Quiero uno igual</a>
                 ` : `
                     <div>
                         <span class="price-label-cat">Valor Comercial</span>
