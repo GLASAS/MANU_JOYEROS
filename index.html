@@ -730,84 +730,142 @@
         }
 
         // ==========================================
-        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA
+        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA (EN BLANCO Y PROFESIONAL)
         // ==========================================
         async function renderizarModuloInventario(container) {
             await cargarCategoriasDinamicas();
             await cargarValorOroDia();
 
+            let fechaHoy = new Date().toISOString().split('T')[0];
+            let nombreUsuarioLogueado = usuarioActual ? (usuarioActual.nombre || usuarioActual.usuario || '') : '';
+
             container.innerHTML = `
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                        <h3 style="color: #0f172a; margin: 0;">📦 Inventario Físico y Arqueo en Línea</h3>
+                <div class="card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.06); border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+                    
+                    <!-- ENCABEZADO ELEGANTE DEL ARQUEO -->
+                    <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <span style="font-size: 0.72rem; font-weight: 700; color: #d97706; letter-spacing: 1.5px; text-transform: uppercase;">Módulo de Auditoría</span>
+                            <h2 style="color: #0f172a; margin: 2px 0 5px 0; font-size: 1.4rem;">📦 Arqueo e Inventario Físico en Línea</h2>
+                            <p style="color: #64748b; font-size: 0.88rem; margin: 0;">Verifique y puntee las existencias reales disponibles en vitrinas y caja fuerte.</p>
+                        </div>
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <button class="btn-nuevo-producto" style="background: #059669;" onclick="exportarFormatoArqueoCSV()">📥 Descargar Formato Excel</button>
-                            <button class="btn-nuevo-producto" style="background: #2563eb;" onclick="reiniciarArqueoEnLinea()">🔄 Reiniciar Arqueo</button>
+                            <button class="btn-nuevo-producto" style="background: #2563eb;" onclick="reiniciarArqueoEnLinea()">🔄 Limpiar Arqueo</button>
                             <button class="btn-discreet-refresh" onclick="renderizarModuloInventario(document.getElementById('contentBody'))" title="Recargar">🔄</button>
                         </div>
                     </div>
-                    
+
+                    <!-- TARJETA DE DATOS Y RESPONSABLES DEL ARQUEO -->
+                    <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 0.95rem; font-weight: 700;">📋 Datos de Control y Responsables</h4>
+                        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 0;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">📅 Fecha del Arqueo *</label>
+                                <input type="date" id="arqFechaInput" value="${fechaHoy}" style="background: #fff; font-size: 0.9rem;" onchange="actualizarMetadatosArqueo()">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">👤 Responsable del Arqueo *</label>
+                                <input type="text" id="arqResponsableInput" value="${nombreUsuarioLogueado}" placeholder="Ej: Carlos Corredor" style="background: #fff; font-size: 0.9rem;" oninput="actualizarMetadatosArqueo()">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">🏢 A quién se le hizo (Área / Vitrina) *</label>
+                                <input type="text" id="arqAuditadoAInput" value="Inventario General / Vitrinas" placeholder="Ej: Vitrina Principal o Colpensiones" style="background: #fff; font-size: 0.9rem;" oninput="actualizarMetadatosArqueo()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TARJETAS DE MÉTRICAS -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 1.5rem;">
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <span style="font-size: 0.75rem; color: #64748b; font-weight: bold;">TOTAL REFERENCIAS</span>
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: bold;">TOTAL REFERENCIAS</span>
                             <div id="arqTotalItems" style="font-size: 1.4rem; font-weight: bold; color: #0f172a;">0</div>
                         </div>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <span style="font-size: 0.75rem; color: #64748b; font-weight: bold;">✅ PUNTEADAS (PRESENTES)</span>
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: bold;">✅ PUNTEADAS (PRESENTES)</span>
                             <div id="arqTotalPresentes" style="font-size: 1.4rem; font-weight: bold; color: #059669;">0</div>
                         </div>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <span style="font-size: 0.75rem; color: #64748b; font-weight: bold;">❌ FALTANTES</span>
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: bold;">❌ FALTANTES / PENDIENTES</span>
                             <div id="arqTotalFaltantes" style="font-size: 1.4rem; font-weight: bold; color: #dc2626;">0</div>
                         </div>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <span style="font-size: 0.75rem; color: #64748b; font-weight: bold;">VALOR TOTAL AUDITADO</span>
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: bold;">VALOR TOTAL AUDITADO</span>
                             <div id="arqValorAuditado" style="font-size: 1.4rem; font-weight: bold; color: #d97706;">$0</div>
                         </div>
                     </div>
 
+                    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
                     <div class="catalog-toolbar" style="margin-bottom: 1rem;">
                         <input type="text" id="filtroArqTexto" placeholder="🔍 Buscar por SKU, Descripción, Ubicación..." style="max-width: 350px;" oninput="filtrarTablaArqueo()">
                         <select id="filtroArqEstado" style="max-width: 200px;" onchange="filtrarTablaArqueo()">
                             <option value="TODOS">Todos los estados</option>
                             <option value="PRESENTE">✅ Presentes</option>
-                            <option value="FALTANTE">❌ Faltantes / Pendientes</option>
+                            <option value="PENDIENTE">⭕ Pendientes (En Blanco)</option>
+                            <option value="FALTANTE">❌ Faltantes</option>
                         </select>
                     </div>
 
                     <div id="tablaArqueoContenedor">Cargando inventario para arqueo...</div>
                 </div>`;
 
-            if (!listaProductosCache || listaProductosCache.length === 0) {
-                const res = await API.llamar("obtenerProductos", {}, "GET");
-                if (res && res.status === "success") {
-                    listaProductosCache = res.data || [];
-                }
+            // Cargar productos y filtrar únicamente los disponibles
+            let productosCrudos = [];
+            const res = await API.llamar("obtenerProductos", {}, "GET");
+            if (res && res.status === "success") {
+                productosCrudos = res.data || [];
             }
 
-            // Inicializar estados de arqueo en memoria si no existen
+            let skusVendidosSet = {};
+            try {
+                const resSalidas = await API.llamar("obtenerSalidas", {}, "GET");
+                if (resSalidas && resSalidas.status === "success" && resSalidas.data) {
+                    resSalidas.data.forEach(s => {
+                        let skuSalida = s.SKU || s.sku || "";
+                        if (!skuSalida && s.Motivo && (s.Motivo.includes("AN") || s.Motivo.includes("JO"))) {
+                            skuSalida = s.Motivo;
+                        }
+                        if (skuSalida) skusVendidosSet[skuSalida.trim().toUpperCase()] = true;
+                    });
+                }
+            } catch(e) {}
+
+            window.listaDisponiblesArqueo = productosCrudos.filter(p => {
+                let skuProd = String(p.SKU || p.sku || p.Ref || "").trim().toUpperCase();
+                return !skusVendidosSet[skuProd];
+            });
+
+            window.listaArqueoFiltradaCache = window.listaDisponiblesArqueo;
+
+            // Inicializar estados en blanco ("" / PENDIENTE) para que el usuario puntee manualmente
             if (!window.arqueoEstados) {
                 window.arqueoEstados = {};
-                listaProductosCache.forEach(p => {
-                    let sku = p.SKU || p.sku;
-                    if (sku) window.arqueoEstados[sku] = true; // Por defecto presentes al iniciar
-                });
             }
+            window.listaDisponiblesArqueo.forEach(p => {
+                let sku = p.SKU || p.sku;
+                if (sku && window.arqueoEstados[sku] === undefined) {
+                    window.arqueoEstados[sku] = ""; // EN BLANCO por defecto
+                }
+            });
 
-            construirTablaArqueo(listaProductosCache);
+            construirTablaArqueo(window.listaArqueoFiltradaCache);
+        }
+
+        function actualizarMetadatosArqueo() {
+            // Guarda dinámicamente si se requiere o actualiza la vista si hace falta
         }
 
         function construirTablaArqueo(productos) {
-            let totalItems = productos.length;
+            let totalItems = window.listaDisponiblesArqueo.length;
             let presentes = 0;
             let faltantes = 0;
             let valorAuditado = 0;
 
-            productos.forEach(p => {
+            window.listaDisponiblesArqueo.forEach(p => {
                 let sku = p.SKU || p.sku;
-                let estaPresente = window.arqueoEstados[sku] !== false; // por defecto true
+                let estadoActual = window.arqueoEstados[sku];
 
-                if (estaPresente) {
+                if (estadoActual === 'PRESENTE') {
                     presentes++;
                     let vPiedra = Number(p.Valor_Piedra) || 0;
                     let peso = parseFloat(String(p.Peso || p.peso || "0").replace(',', '.')) || 0;
@@ -817,7 +875,7 @@
                     let vBase = base * (1 + (margen / 100));
                     let vFinal = Math.round(vBase - (vBase * (desc / 100)));
                     valorAuditado += vFinal;
-                } else {
+                } else if (estadoActual === 'FALTANTE') {
                     faltantes++;
                 }
             });
@@ -826,6 +884,12 @@
             document.getElementById("arqTotalPresentes").textContent = presentes;
             document.getElementById("arqTotalFaltantes").textContent = faltantes;
             document.getElementById("arqValorAuditado").textContent = "$" + valorAuditado.toLocaleString();
+
+            const contenedor = document.getElementById("tablaArqueoContenedor");
+            if (!productos || productos.length === 0) {
+                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay joyas disponibles para auditar.</p>`;
+                return;
+            }
 
             let html = `<div class="table-container"><table class="data-table"><thead><tr>
                 <th>Puntear / Estado</th><th>SKU</th><th>Descripción / Nombre</th><th>Ubicación</th><th>Peso</th><th>Valor Venta Estimado</th>
@@ -844,12 +908,23 @@
                 let vBase = base * (1 + (margen / 100));
                 let vFinal = Math.round(vBase - (vBase * (desc / 100)));
 
-                let estaPresente = window.arqueoEstados[sku] !== false;
+                let estadoVal = window.arqueoEstados[sku] || "";
+
+                let bgSelect = "#ffffff";
+                let colorSelect = "#64748b";
+                let borderSelect = "#cbd5e1";
+
+                if (estadoVal === 'PRESENTE') {
+                    bgSelect = "#dcfce7"; colorSelect = "#166534"; borderSelect = "#86efac";
+                } else if (estadoVal === 'FALTANTE') {
+                    bgSelect = "#fee2e2"; colorSelect = "#991b1b"; borderSelect = "#fca5a5";
+                }
 
                 let selectorHtml = `
-                    <select onchange="cambiarEstadoArqueo('${sku}', this.value)" style="padding: 6px 10px; font-weight: bold; border-radius: 6px; background: ${estaPresente ? '#dcfce7' : '#fee2e2'}; color: ${estaPresente ? '#166534' : '#991b1b'}; border: 1px solid ${estaPresente ? '#86efac' : '#fca5a5'};">
-                        <option value="PRESENTE" ${estaPresente ? 'selected' : ''}>✅ Presente</option>
-                        <option value="FALTANTE" ${!estaPresente ? 'selected' : ''}>❌ Faltante</option>
+                    <select onchange="cambiarEstadoArqueo('${sku}', this.value)" style="padding: 6px 10px; font-weight: bold; border-radius: 6px; background: ${bgSelect}; color: ${colorSelect}; border: 1px solid ${borderSelect};">
+                        <option value="" ${estadoVal === '' ? 'selected' : ''}>-- Seleccionar Estado --</option>
+                        <option value="PRESENTE" ${estadoVal === 'PRESENTE' ? 'selected' : ''}>✅ Presente</option>
+                        <option value="FALTANTE" ${estadoVal === 'FALTANTE' ? 'selected' : ''}>❌ Faltante</option>
                     </select>
                 `;
 
@@ -864,65 +939,78 @@
             });
 
             html += `</tbody></table></div>`;
-            document.getElementById("tablaArqueoContenedor").innerHTML = html;
+            contenedor.innerHTML = html;
         }
 
         function cambiarEstadoArqueo(sku, estado) {
-            window.arqueoEstados[sku] = (estado === 'PRESENTE');
-            construirTablaArqueo(listaProductosCache);
+            window.arqueoEstados[sku] = estado;
+            construirTablaArqueo(window.listaArqueoFiltradaCache);
         }
 
         function reiniciarArqueoEnLinea() {
             window.arqueoEstados = {};
-            listaProductosCache.forEach(p => {
-                let sku = p.SKU || p.sku;
-                if (sku) window.arqueoEstados[sku] = true;
-            });
-            construirTablaArqueo(listaProductosCache);
+            if (window.listaDisponiblesArqueo) {
+                window.listaDisponiblesArqueo.forEach(p => {
+                    let sku = p.SKU || p.sku;
+                    if (sku) window.arqueoEstados[sku] = "";
+                });
+            }
+            construirTablaArqueo(window.listaArqueoFiltradaCache);
         }
 
         function filtrarTablaArqueo() {
             const query = document.getElementById("filtroArqTexto").value.toLowerCase().trim();
             const estadoFiltro = document.getElementById("filtroArqEstado").value;
 
-            const filtrados = listaProductosCache.filter(p => {
+            if (!window.listaDisponiblesArqueo) return;
+
+            window.listaArqueoFiltradaCache = window.listaDisponiblesArqueo.filter(p => {
                 const sku = String(p.SKU || p.sku || "").toLowerCase();
                 const nombre = String(p.Nombre || p.nombre || "").toLowerCase();
                 const ubicacion = String(p.ID_Ubicacion || p.ubicacion || "").toLowerCase();
-                const estaPresente = window.arqueoEstados[p.SKU || p.sku] !== false;
-                const estadoStr = estaPresente ? "PRESENTE" : "FALTANTE";
+                const estadoVal = window.arqueoEstados[p.SKU || p.sku] || "";
 
                 const coincideTexto = !query || sku.includes(query) || nombre.includes(query) || ubicacion.includes(query);
-                const coincideEstado = (estadoFiltro === "TODOS" || estadoStr === estadoFiltro);
+                
+                let coincideEstado = true;
+                if (estadoFiltro === "PRESENTE") coincideEstado = (estadoVal === "PRESENTE");
+                else if (estadoFiltro === "FALTANTE") coincideEstado = (estadoVal === "FALTANTE");
+                else if (estadoFiltro === "PENDIENTE") coincideEstado = (estadoVal === "");
 
                 return coincideTexto && coincideEstado;
             });
 
-            construirTablaArqueo(filtrados);
+            construirTablaArqueo(window.listaArqueoFiltradaCache);
         }
 
         function exportarFormatoArqueoCSV() {
-            if (!listaProductosCache || listaProductosCache.length === 0) {
-                alert("No hay productos en el inventario para exportar.");
+            if (!window.listaDisponiblesArqueo || window.listaDisponiblesArqueo.length === 0) {
+                alert("No hay joyas disponibles para exportar el formato.");
                 return;
             }
 
+            let fechaArqueo = document.getElementById("arqFechaInput") ? document.getElementById("arqFechaInput").value : "";
+            let responsable = document.getElementById("arqResponsableInput") ? document.getElementById("arqResponsableInput").value : "";
+            let auditadoA = document.getElementById("arqAuditadoAInput") ? document.getElementById("arqAuditadoAInput").value : "";
+
             let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += `Fecha_Arqueo:${fechaArqueo};Responsable:${responsable};Auditado_A:${auditadoA}\n`;
             csvContent += "SKU;Descripcion;Ubicacion;Peso;Estado_Fisico_Punteado\n";
 
-            listaProductosCache.forEach(p => {
+            window.listaDisponiblesArqueo.forEach(p => {
                 let sku = p.SKU || p.sku || "";
                 let nombre = `"${(p.Nombre || p.nombre || "").replace(/"/g, '""')}"`;
                 let ubicacion = p.ID_Ubicacion || p.ubicacion || "";
                 let peso = p.Peso || p.peso || "0";
+                let estadoItem = window.arqueoEstados[sku] || "PENDIENTE";
 
-                csvContent += [sku, nombre, ubicacion, peso, "[ ] ENCONTRADO"].join(";") + "\n";
+                csvContent += [sku, nombre, ubicacion, peso, estadoItem].join(";") + "\n";
             });
 
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "formato_arqueo_inventario_manu_joyeros.csv");
+            link.setAttribute("download", `arqueo_inventario_${fechaArqueo}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1573,7 +1661,14 @@
 
                 let valorVentaRedondeado = Math.round(valorVenta);
 
-                let botonQrHtml = `<td><button class="btn-action btn-qr" onclick="abrirModalEtiqueta('${p.SKU}', '${encodeURIComponent(p.Nombre || '')}', '${codigoBarraVal}', '${encodeURIComponent(fotoVal)}', '${valorVentaRedondeado}')" title="Ver QR y Código de Barras Separados">🏷️</button></td>`;
+                // ENLACE DE CERTIFICADO / ETIQUETA INCLUYENDO FECHA Y RESPONSABLE DEL ARQUEO
+                let fechaArqueoLink = document.getElementById("arqFechaInput") ? document.getElementById("arqFechaInput").value : new Date().toISOString().split('T')[0];
+                let respArqueoLink = document.getElementById("arqResponsableInput") ? document.getElementById("arqResponsableInput").value : (usuarioActual ? usuarioActual.nombre : '');
+                let auditadoALink = document.getElementById("arqAuditadoAInput") ? document.getElementById("arqAuditadoAInput").value : '';
+
+                let metadataArqueo = `&fecha_arq=${encodeURIComponent(fechaArqueoLink)}&resp_arq=${encodeURIComponent(respArqueoLink)}&auditado_a=${encodeURIComponent(auditadoALink)}`;
+
+                let botonQrHtml = `<td><button class="btn-action btn-qr" onclick="abrirModalEtiqueta('${p.SKU}', '${encodeURIComponent(p.Nombre || '')}', '${codigoBarraVal}', '${encodeURIComponent(fotoVal)}', '${valorVentaRedondeado}', '${encodeURIComponent(metadataArqueo)}')" title="Ver QR y Código de Barras">🏷️</button></td>`;
 
                 html += `<tr>`;
 
@@ -1623,17 +1718,18 @@
             contenedor.innerHTML = html;
         }
 
-        function abrirModalEtiqueta(sku, nombreEncoded, codigoBarra, fotoEncoded, valorVentaStr) {
+        function abrirModalEtiqueta(sku, nombreEncoded, codigoBarra, fotoEncoded, valorVentaStr, metadataArqueoEncoded) {
             let nombre = decodeURIComponent(nombreEncoded);
             let foto = decodeURIComponent(fotoEncoded);
             let valorVentaNum = Number(valorVentaStr) || 0;
+            let metadataArqueo = decodeURIComponent(metadataArqueoEncoded || '');
 
             document.getElementById("modalSkuLabel").textContent = `SKU: ${sku}`;
             document.getElementById("modalSkuBarcodeLabel").textContent = `SKU: ${sku}`;
             document.getElementById("modalDescLabel").textContent = "Escanee para ver certificado digital";
 
             let skuEncriptado = btoa(sku);
-            let certUrl = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuEncriptado}`;
+            let certUrl = `https://glasas.github.io/MANU_JOYEROS/cert.html?token=${skuEncriptado}${metadataArqueo}`;
             
             let qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(certUrl)}`;
             document.getElementById("imgQrGenerado").src = qrApiUrl;
