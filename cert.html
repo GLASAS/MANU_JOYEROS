@@ -10,7 +10,7 @@
         .cert-card { background: #ffffff; width: 100%; max-width: 480px; padding: 30px 30px 42px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px solid #e2e8f0; text-align: center; position: relative; }
         .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         
-        /* Contenedor del Logotipo Oficial */
+        /* Contenedor del Logotipo Oficial en la Raíz */
         .cert-logo-container { width: 100%; max-width: 170px; margin: 0 auto; background: #fff; padding: 4px; border-radius: 6px; }
         .cert-logo-img { width: 100%; height: auto; display: block; object-fit: contain; }
 
@@ -55,7 +55,7 @@
             <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
         </div>
 
-        <div class="cert-version-label" id="lblCertVersion">Versión V3.0 • MANU JOYEROS</div>
+        <div class="cert-version-label" id="lblCertVersion">Versión V3.1 • MANU JOYEROS</div>
     </div>
 
     <script src="js/config.js"></script>
@@ -99,7 +99,7 @@
                 }
 
                 if (!resProd || resProd.status !== "success" || !resProd.data) {
-                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se pudo conectar con la base de datos o la respuesta fue vacía.</p>`;
+                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se pudo conectar con la base de datos.</p>`;
                     return;
                 }
 
@@ -155,7 +155,9 @@
                     <div class="company-info">
                         <strong>MANU JOYEROS</strong><br>
                         NIT: 900.000.000-1 • Tel: +57 (300) 8123125<br>
-                        Dirección Principal: Bogotá D.C., Colombia<br>
+                        Dirección Principal: Ak 7 #115-60 Local 217<br>
+                        Hacienda Santa Barbara<br>
+                        Bogotá D.C., Colombia<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
 
