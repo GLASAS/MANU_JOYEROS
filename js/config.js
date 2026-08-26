@@ -9,5 +9,5 @@ const CONFIG = {
   DIRECCION: "Ak 7 #115-60 Local 117",
   EDIFICIO_O_LOCAL: "Hacienda Santa Barbara",
   CIUDAD: "Bogotá D.C., Colombia",
-  VERSION: "V1.1133"
+  VERSION: "V1.1130"
 };
