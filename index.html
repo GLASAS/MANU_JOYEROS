@@ -373,6 +373,7 @@
             else if(vista === 'actualizacion_oro') { renderizarModuloActualizacionOro(content); }
             else if(vista === 'entradas') { renderizarModuloEntradasSalidas(content, 'ENTRADAS'); }
             else if(vista === 'salidas') { renderizarModuloEntradasSalidas(content, 'SALIDAS'); }
+            else if(vista === 'kardex') { renderizarModuloKardex(content); }
             else if(vista === 'usuarios') { renderizarModuloUsuarios(content); }
             else if(vista === 'cambiar_password') { renderizarModuloCambiarPassword(content); }
             else {
@@ -454,6 +455,86 @@
             } else {
                 contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay registros de ${tipoMovimiento.toLowerCase()} en el sistema.</p>`;
             }
+        }
+
+        async function renderizarModuloKardex(container) {
+            container.innerHTML = `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #0f172a; margin: 0;">📑 Kardex de Movimientos de Inventario</h3>
+                        <button class="btn-nuevo-producto" onclick="renderizarModuloKardex(document.getElementById('contentBody'))">🔄 Actualizar Kardex</button>
+                    </div>
+                    <div class="catalog-toolbar" style="margin-bottom: 1rem;">
+                        <input type="text" id="filtroKardexTexto" placeholder="🔍 Buscar por SKU, Producto, Motivo..." style="max-width: 350px;" oninput="filtrarTablaKardex()">
+                    </div>
+                    <div id="tablaKardexContenedor">Cargando Kardex...</div>
+                </div>`;
+
+            try {
+                const [resEntradas, resSalidas] = await Promise.all([
+                    API.llamar("obtenerEntradas", {}, "GET"),
+                    API.llamar("obtenerSalidas", {}, "GET")
+                ]);
+
+                let movimientos = [];
+                if (resEntradas && resEntradas.status === "success" && resEntradas.data) {
+                    resEntradas.data.forEach(e => movimientos.push({ ...e, Tipo: 'ENTRADA' }));
+                }
+                if (resSalidas && resSalidas.status === "success" && resSalidas.data) {
+                    resSalidas.data.forEach(s => movimientos.push({ ...s, Tipo: 'SALIDA' }));
+                }
+
+                window.listaKardexCache = movimientos;
+                construirTablaKardex(movimientos);
+            } catch (e) {
+                document.getElementById("tablaKardexContenedor").innerHTML = `<p style="color: #ef4444; text-align: center; padding: 2rem;">Error al cargar los datos del Kardex.</p>`;
+            }
+        }
+
+        function construirTablaKardex(movimientos) {
+            const contenedor = document.getElementById("tablaKardexContenedor");
+            if (!movimientos || movimientos.length === 0) {
+                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay movimientos registrados en el Kardex.</p>`;
+                return;
+            }
+
+            let html = `<div class="table-container"><table class="data-table"><thead><tr>
+                <th>Tipo</th><th>Fecha</th><th>SKU</th><th>Cantidad</th><th>Motivo</th><th>Usuario</th><th>Observaciones</th>
+            </tr></thead><tbody>`;
+
+            movimientos.forEach(m => {
+                let tipo = m.Tipo || 'MOVIMIENTO';
+                let badgeColor = tipo === 'ENTRADA' ? '#059669' : '#dc2626';
+                let skuVal = m.SKU || m.sku || '-';
+                let motivoVal = m.Motivo || m.motivo || '-';
+
+                html += `<tr>
+                    <td><span class="badge" style="background-color: ${badgeColor};">${tipo}</span></td>
+                    <td>${m.Fecha || m.fecha || '-'}</td>
+                    <td><strong style="color: #d97706;">${skuVal}</strong></td>
+                    <td>${m.Cantidad || m.cantidad || 1}</td>
+                    <td>${motivoVal}</td>
+                    <td>${m.Usuario || m.usuario || '-'}</td>
+                    <td>${m.Observaciones || m.observaciones || '-'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+            contenedor.innerHTML = html;
+        }
+
+        function filtrarTablaKardex() {
+            const query = document.getElementById("filtroKardexTexto").value.toLowerCase().trim();
+            if (!window.listaKardexCache) return;
+
+            const filtrados = window.listaKardexCache.filter(m => {
+                let sku = String(m.SKU || m.sku || "").toLowerCase();
+                let motivo = String(m.Motivo || m.motivo || "").toLowerCase();
+                let usuario = String(m.Usuario || m.usuario || "").toLowerCase();
+                let obs = String(m.Observaciones || m.observaciones || "").toLowerCase();
+
+                return !query || sku.includes(query) || motivo.includes(query) || usuario.includes(query) || obs.includes(query);
+            });
+            construirTablaKardex(filtrados);
         }
 
         async function abrirFormularioMovimiento(tipoMov) {
