@@ -115,7 +115,7 @@
             border-radius: 30px; padding: 2px 4px; width: 32px; height: 32px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
         }
-        .search-expandable-box.expanded { width: 280px; background: #f8fafc; border-color: #3b82f6; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15); cursor: default; }
+        .search-expandable-box.expanded { width: 310px; background: #f8fafc; border-color: #3b82f6; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15); cursor: default; }
         .search-expandable-icon { min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background: transparent; border: none; cursor: pointer; }
         .search-expandable-input { border: none; background: transparent; outline: none; font-size: 0.82rem; width: 100%; padding-left: 4px; opacity: 0; transition: opacity 0.2s ease; }
         .search-expandable-box.expanded .search-expandable-input { opacity: 1; }
@@ -464,7 +464,7 @@
                         <button class="btn-nuevo-producto" onclick="renderizarModuloKardex(document.getElementById('contentBody'))">🔄 Actualizar Kardex</button>
                     </div>
                     <div class="catalog-toolbar" style="margin-bottom: 1rem;">
-                        <input type="text" id="filtroKardexTexto" placeholder="🔍 Buscar por SKU, Producto, Motivo..." style="max-width: 350px;" oninput="filtrarTablaKardex()">
+                        <input type="text" id="filtroKardexTexto" placeholder="🔍 Buscar por SKU, Producto, Código de Barras, Motivo..." style="max-width: 400px;" oninput="filtrarTablaKardex()">
                     </div>
                     <div id="tablaKardexContenedor">Cargando Kardex...</div>
                 </div>`;
@@ -730,7 +730,7 @@
         }
 
         // ==========================================
-        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA (SIN VALOR DE VENTA, COLUMNA PUNTEAR AL FINAL)
+        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA (INCLUYE BÚSQUEDA POR CÓDIGO DE BARRAS)
         // ==========================================
         async function renderizarModuloInventario(container) {
             await cargarCategoriasDinamicas();
@@ -775,7 +775,7 @@
                         </div>
                     </div>
 
-                    <!-- TARJETAS DE MÉTRICAS (SIN VALOR AUDITADO) -->
+                    <!-- TARJETAS DE MÉTRICAS -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 1.5rem;">
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
                             <span style="font-size: 0.72rem; color: #64748b; font-weight: bold;">TOTAL REFERENCIAS</span>
@@ -793,7 +793,7 @@
 
                     <!-- BARRA DE BÚSQUEDA Y FILTROS -->
                     <div class="catalog-toolbar" style="margin-bottom: 1rem;">
-                        <input type="text" id="filtroArqTexto" placeholder="🔍 Buscar por SKU, Descripción, Ubicación..." style="max-width: 350px;" oninput="filtrarTablaArqueo()">
+                        <input type="text" id="filtroArqTexto" placeholder="🔍 Buscar por SKU, Código de Barras, Descripción, Ubicación..." style="max-width: 420px;" oninput="filtrarTablaArqueo()">
                         <select id="filtroArqEstado" style="max-width: 200px;" onchange="filtrarTablaArqueo()">
                             <option value="TODOS">Todos los estados</option>
                             <option value="PRESENTE">✅ Presentes</option>
@@ -873,13 +873,13 @@
                 return;
             }
 
-            // TABLA CON LA COLUMNA PUNTEAR / ESTADO AL FINAL (DESPUÉS DE PESO)
             let html = `<div class="table-container"><table class="data-table"><thead><tr>
-                <th>SKU</th><th>Descripción / Nombre</th><th>Ubicación</th><th>Peso</th><th>Puntear / Estado</th>
+                <th>SKU</th><th>Código de Barras</th><th>Descripción / Nombre</th><th>Ubicación</th><th>Peso</th><th>Puntear / Estado</th>
             </tr></thead><tbody>`;
 
             productos.forEach(p => {
                 let sku = p.SKU || p.sku || '-';
+                let codigoBarraVal = p.Codigo_Barra || p.codigo_barra || '-';
                 let nombre = p.Nombre || p.nombre || '-';
                 let ubicacion = p.ID_Ubicacion || p.ubicacion || '-';
                 let peso = parseFloat(String(p.Peso || p.peso || "0").replace(',', '.')) || 0;
@@ -906,6 +906,7 @@
 
                 html += `<tr>
                     <td><strong style="color: #d97706;">${sku}</strong></td>
+                    <td style="font-family: monospace; font-size: 0.8rem; color: #475569;">${codigoBarraVal}</td>
                     <td>${nombre}</td>
                     <td>${ubicacion}</td>
                     <td>${peso > 0 ? peso + 'g' : '-'}</td>
@@ -941,11 +942,12 @@
 
             window.listaArqueoFiltradaCache = window.listaDisponiblesArqueo.filter(p => {
                 const sku = String(p.SKU || p.sku || "").toLowerCase();
+                const codigoBarra = String(p.Codigo_Barra || p.codigo_barra || "").toLowerCase();
                 const nombre = String(p.Nombre || p.nombre || "").toLowerCase();
                 const ubicacion = String(p.ID_Ubicacion || p.ubicacion || "").toLowerCase();
                 const estadoVal = window.arqueoEstados[p.SKU || p.sku] || "";
 
-                const coincideTexto = !query || sku.includes(query) || nombre.includes(query) || ubicacion.includes(query);
+                const coincideTexto = !query || sku.includes(query) || codigoBarra.includes(query) || nombre.includes(query) || ubicacion.includes(query);
                 
                 let coincideEstado = true;
                 if (estadoFiltro === "PRESENTE") coincideEstado = (estadoVal === "PRESENTE");
@@ -970,16 +972,17 @@
 
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += `Fecha_Arqueo:${fechaArqueo};Responsable:${responsable};Auditado_A:${auditadoA}\n`;
-            csvContent += "SKU;Descripcion;Ubicacion;Peso;Estado_Fisico_Punteado\n";
+            csvContent += "SKU;Codigo_Barra;Descripcion;Ubicacion;Peso;Estado_Fisico_Punteado\n";
 
             window.listaDisponiblesArqueo.forEach(p => {
                 let sku = p.SKU || p.sku || "";
+                let codigoBarra = p.Codigo_Barra || p.codigo_barra || "";
                 let nombre = `"${(p.Nombre || p.nombre || "").replace(/"/g, '""')}"`;
                 let ubicacion = p.ID_Ubicacion || p.ubicacion || "";
                 let peso = p.Peso || p.peso || "0";
                 let estadoItem = window.arqueoEstados[sku] || "PENDIENTE";
 
-                csvContent += [sku, nombre, ubicacion, peso, estadoItem].join(";") + "\n";
+                csvContent += [sku, codigoBarra, nombre, ubicacion, peso, estadoItem].join(";") + "\n";
             });
 
             let encodedUri = encodeURI(csvContent);
@@ -998,14 +1001,14 @@
                 if (res && res.status === "success") listaProductosCache = res.data || [];
             }
 
-            let optionsProductos = listaProductosCache.map(p => `<option value="${p.SKU}">${p.SKU} - ${p.Nombre}</option>`).join('');
+            let optionsProductos = listaProductosCache.map(p => `<option value="${p.SKU}">${p.SKU} - ${p.Nombre} (${p.Codigo_Barra || ''})</option>`).join('');
 
             document.getElementById("contentBody").innerHTML = `
                 <div class="card" style="max-width: 600px; margin: 0 auto;">
                     <h3 style="margin-bottom: 1.5rem; color: #0f172a;">Registrar ${tipoMov === 'ENTRADAS' ? 'Entrada' : 'Salida'} de Inventario</h3>
                     <form id="formMovimiento" onsubmit="guardarMovimiento(event, '${tipoMov}')">
                         <div class="form-grid" style="grid-template-columns: 1fr;">
-                            <div class="form-group"><label>Seleccionar Producto (SKU) *</label><select id="movSku" required><option value="">Seleccione joya...</option>${optionsProductos}</select></div>
+                            <div class="form-group"><label>Seleccionar Producto (SKU / Código de Barras) *</label><select id="movSku" required><option value="">Seleccione joya...</option>${optionsProductos}</select></div>
                             <div class="form-group"><label>Cantidad *</label><input type="number" id="movCantidad" required min="1" value="1"></div>
                             <div class="form-group"><label>Motivo *</label><select id="movMotivo" required>
                                 ${tipoMov === 'ENTRADAS' ? 
@@ -1303,7 +1306,7 @@
                         <button class="btn-discreet-refresh" onclick="forzarRecargaCatalogo()" title="Actualizar Datos">🔄</button>
                         <div class="search-expandable-box" id="searchExpandableBox" onclick="expandirBuscador()">
                             <button type="button" class="search-expandable-icon" title="Buscar en catálogo">🔍</button>
-                            <input type="text" id="inputBuscadorCatalogo" class="search-expandable-input" placeholder="Buscar por SKU, Nombre, Código, Material, Color, Ubicación..." oninput="filtrarCatalogoEnVivo()">
+                            <input type="text" id="inputBuscadorCatalogo" class="search-expandable-input" placeholder="Buscar por SKU, Código de Barras, Nombre, Material, Color, Ubicación..." oninput="filtrarCatalogoEnVivo()">
                         </div>
                     </div>
 
@@ -1537,12 +1540,12 @@
 
                 return terminos.every(termino => {
                     return sku.includes(termino) || 
+                           codigoBarra.includes(termino) || 
                            nombre.includes(termino) || 
                            categoria.includes(termino) || 
                            material.includes(termino) || 
                            color.includes(termino) ||
                            ubicacion.includes(termino) ||
-                           codigoBarra.includes(termino) || 
                            pesoStr.includes(termino) ||
                            piedraStr.includes(termino);
                 });
