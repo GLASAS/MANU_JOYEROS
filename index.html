@@ -730,7 +730,7 @@
         }
 
         // ==========================================
-        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA (INCLUYE BÚSQUEDA POR CÓDIGO DE BARRAS)
+        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA
         // ==========================================
         async function renderizarModuloInventario(container) {
             await cargarCategoriasDinamicas();
@@ -742,7 +742,6 @@
             container.innerHTML = `
                 <div class="card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.06); border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
                     
-                    <!-- ENCABEZADO ELEGANTE DEL ARQUEO -->
                     <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
                         <div>
                             <span style="font-size: 0.72rem; font-weight: 700; color: #d97706; letter-spacing: 1.5px; text-transform: uppercase;">Módulo de Auditoría</span>
@@ -756,7 +755,6 @@
                         </div>
                     </div>
 
-                    <!-- TARJETA DE DATOS Y RESPONSABLES DEL ARQUEO -->
                     <div style="background: #f8fafc; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
                         <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 0.95rem; font-weight: 700;">📋 Datos de Control y Responsables</h4>
                         <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 0;">
@@ -770,12 +768,11 @@
                             </div>
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">🏢 A quién se le hizo (Área / Vitrina) *</label>
-                                <input type="text" id="arqAuditadoAInput" value="Inventario General / Vitrinas" placeholder="Ej: Vitrina Principal o Colpensiones" style="background: #fff; font-size: 0.9rem;" oninput="actualizarMetadatosArqueo()">
+                                <input type="text" id="arqAuditadoAInput" value="Inventario General / Vitrinas" placeholder="Ej: Vitrina Principal" style="background: #fff; font-size: 0.9rem;" oninput="actualizarMetadatosArqueo()">
                             </div>
                         </div>
                     </div>
 
-                    <!-- TARJETAS DE MÉTRICAS -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 1.5rem;">
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
                             <span style="font-size: 0.72rem; color: #64748b; font-weight: bold;">TOTAL REFERENCIAS</span>
@@ -791,7 +788,6 @@
                         </div>
                     </div>
 
-                    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
                     <div class="catalog-toolbar" style="margin-bottom: 1rem;">
                         <input type="text" id="filtroArqTexto" placeholder="🔍 Buscar por SKU, Código de Barras, Descripción, Ubicación..." style="max-width: 420px;" oninput="filtrarTablaArqueo()">
                         <select id="filtroArqEstado" style="max-width: 200px;" onchange="filtrarTablaArqueo()">
@@ -811,23 +807,9 @@
                 productosCrudos = res.data || [];
             }
 
-            let skusVendidosSet = {};
-            try {
-                const resSalidas = await API.llamar("obtenerSalidas", {}, "GET");
-                if (resSalidas && resSalidas.status === "success" && resSalidas.data) {
-                    resSalidas.data.forEach(s => {
-                        let skuSalida = s.SKU || s.sku || "";
-                        if (!skuSalida && s.Motivo && (s.Motivo.includes("AN") || s.Motivo.includes("JO"))) {
-                            skuSalida = s.Motivo;
-                        }
-                        if (skuSalida) skusVendidosSet[skuSalida.trim().toUpperCase()] = true;
-                    });
-                }
-            } catch(e) {}
-
             window.listaDisponiblesArqueo = productosCrudos.filter(p => {
-                let skuProd = String(p.SKU || p.sku || p.Ref || "").trim().toUpperCase();
-                return !skusVendidosSet[skuProd];
+                let estadoProd = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
+                return estadoProd.includes("DISPONIBLE");
             });
 
             window.listaArqueoFiltradaCache = window.listaDisponiblesArqueo;
@@ -1001,7 +983,13 @@
                 if (res && res.status === "success") listaProductosCache = res.data || [];
             }
 
-            let optionsProductos = listaProductosCache.map(p => `<option value="${p.SKU}">${p.SKU} - ${p.Nombre} (${p.Codigo_Barra || ''})</option>`).join('');
+            // Filtrar solo productos disponibles para salidas
+            let productosDisponibles = listaProductosCache.filter(p => {
+                let estadoProd = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
+                return tipoMov === 'ENTRADAS' || estadoProd.includes("DISPONIBLE");
+            });
+
+            let optionsProductos = productosDisponibles.map(p => `<option value="${p.SKU}">${p.SKU} - ${p.Nombre} (${p.Codigo_Barra || ''})</option>`).join('');
 
             document.getElementById("contentBody").innerHTML = `
                 <div class="card" style="max-width: 600px; margin: 0 auto;">
@@ -1039,6 +1027,7 @@
             const res = await API.llamar(data.action, data, "POST");
             if (res && res.status === "success") {
                 alert(res.message);
+                localStorage.removeItem("cache_productos_manu");
                 cambiarVista(tipoMov.toLowerCase());
             } else {
                 alert("Error al registrar: " + (res ? res.message : "Desconocido"));
@@ -1322,7 +1311,7 @@
             }
 
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "SKU;Nombre;Categoria;Color;Material;Peso;Valor_Oro;Valor_Piedra;Porcentaje_Venta;Tiene_Descuento;Ubicacion;Codigo_Barra\n";
+            csvContent += "SKU;Nombre;Categoria;Color;Material;Peso;Valor_Oro;Valor_Piedra;Porcentaje_Venta;Tiene_Descuento;Ubicacion;Codigo_Barra;Estado\n";
 
             listaProductosFiltradosCache.forEach(p => {
                 let sku = p.SKU || "";
@@ -1337,8 +1326,9 @@
                 let desc = p.Tiene_Descuento || "0";
                 let ubicacion = p.ID_Ubicacion || "";
                 let codigoBarra = p.Codigo_Barra || "";
+                let estadoItem = p.Estado || p.estado || "DISPONIBLE";
 
-                csvContent += [sku, nombre, cat, color, mat, peso, vOro, vPiedra, margen, desc, ubicacion, codigoBarra].join(";") + "\n";
+                csvContent += [sku, nombre, cat, color, mat, peso, vOro, vPiedra, margen, desc, ubicacion, codigoBarra, estadoItem].join(";") + "\n";
             });
 
             let encodedUri = encodeURI(csvContent);
@@ -1398,7 +1388,8 @@
                                 valor_compra: costoTotalCSV,
                                 porcentaje_venta: cols[8] && cols[8].trim() !== "" ? parseFloat(cols[8]) || 100 : 100,
                                 tiene_descuento: cols[9] && cols[9].trim() !== "" ? parseFloat(cols[9]) || 0 : 0,
-                                ubicacion: cols[10] ? cols[10].trim() : 'VITRINA 1'
+                                ubicacion: cols[10] ? cols[10].trim() : 'VITRINA 1',
+                                estado: 'DISPONIBLE'
                             });
                         }
                     }
@@ -1492,23 +1483,10 @@
                 }
             }
 
-            let skusVendidosSet = {};
-            try {
-                const resSalidas = await API.llamar("obtenerSalidas", {}, "GET");
-                if (resSalidas && resSalidas.status === "success" && resSalidas.data) {
-                    resSalidas.data.forEach(s => {
-                        let skuSalida = s.SKU || s.sku || "";
-                        if (!skuSalida && s.Motivo && (s.Motivo.includes("AN") || s.Motivo.includes("JO"))) {
-                            skuSalida = s.Motivo;
-                        }
-                        if (skuSalida) skusVendidosSet[skuSalida.trim().toUpperCase()] = true;
-                    });
-                }
-            } catch(e) {}
-
+            // Filtrar únicamente los productos cuyo estado sea DISPONIBLE en la columna M
             listaProductosCache = (productos || []).filter(p => {
-                let skuProd = String(p.SKU || p.sku || p.Ref || "").trim().toUpperCase();
-                return !skusVendidosSet[skuProd];
+                let estadoProd = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
+                return estadoProd.includes("DISPONIBLE");
             });
 
             listaProductosFiltradosCache = listaProductosCache;
@@ -2099,6 +2077,7 @@
                 tiene_descuento: document.getElementById("prodDescuento").value || 0,
                 ubicacion: ubicacion,
                 foto: fotoBase64Temporal,
+                estado: 'DISPONIBLE',
                 forzar_creacion: forzarCreacion
             };
 
