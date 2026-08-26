@@ -149,7 +149,7 @@
     <div class="image-modal" id="modalQrBarra" onclick="cerrarModalQr()">
         <div style="background: white; padding: 18px; border-radius: 12px; text-align: center; max-width: 360px; width: 90%; color: #0f172a;" onclick="event.stopPropagation()">
             
-            <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; letter-spacing: 1px; margin-bottom: 2px;">MANU JOYEROS</div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #64748b; letter-spacing: 1px; margin-bottom: 2px;" id="lblModalEmpresaTitle">MANU JOYEROS</div>
             
             <div id="printSectionQr" style="background: #fff; padding: 10px; border: 1.5px dashed #cbd5e1; border-radius: 8px; margin-bottom: 12px;">
                 <div id="modalSkuLabel" style="font-size: 0.95rem; font-weight: bold; color: #0f172a; margin-bottom: 6px;">SKU: AN001</div>
@@ -221,7 +221,7 @@
             <div class="welcome-banner">
                 <div class="welcome-text">
                     <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
-                    <p>Sistema profesional de inventario y control de alta joyería — <em>¡Joyas que trascienden el tiempo!</em></p>
+                    <p>Sistema profesional de inventario y control de alta joyería — <em id="lblSloganBanner">¡Joyas que trascienden el tiempo!</em></p>
                 </div>
                 <div class="welcome-date" id="currentDateLabel" style="margin-top: 10px;"></div>
             </div>
@@ -245,6 +245,15 @@
         let listaColoresCache = ["AMARILLO", "ROJO", "BLANCO", "COMBINADO"];
         let valorOroDelDiaCache = 250000;
 
+        // Variables corporativas globales unificadas desde CONFIG
+        let empNombre = "MANU JOYEROS";
+        let empNit = "900.000.000-1";
+        let empTel = "+57 (300) 8123125";
+        let empDir = "Ak 7 #115-60 Local 217";
+        let empEdificio = "Hacienda Santa Barbara";
+        let empCiudad = "Bogotá D.C., Colombia";
+        let empVersion = "V1.1100";
+
         document.addEventListener("click", function(e) {
             const btn = e.target.closest("button");
             if (btn && (btn.type === "submit" || btn.classList.contains("btn-action"))) {
@@ -264,6 +273,20 @@
         });
 
         document.addEventListener("DOMContentLoaded", async () => {
+            // Sincronización robusta con CONFIG
+            if (typeof CONFIG !== 'undefined') {
+                if (CONFIG.VERSION) empVersion = CONFIG.VERSION;
+                if (CONFIG.NOMBRE_EMPRESA) empNombre = CONFIG.NOMBRE_EMPRESA;
+                if (CONFIG.NIT) empNit = CONFIG.NIT;
+                if (CONFIG.TELEFONO) empTel = CONFIG.TELEFONO;
+                if (CONFIG.DIRECCION) empDir = CONFIG.DIRECCION;
+                if (CONFIG.EDIFICIO_O_LOCAL) empEdificio = CONFIG.EDIFICIO_O_LOCAL;
+                if (CONFIG.CIUDAD) empCiudad = CONFIG.CIUDAD;
+            }
+
+            document.getElementById("versionSidebarLabel").textContent = `Versión ${empVersion} • ${empNombre}`;
+            document.getElementById("lblModalEmpresaTitle").textContent = empNombre;
+
             const usuarioGuardado = localStorage.getItem("usuario_manu");
             if (!usuarioGuardado) { window.location.href = "login.html"; return; }
             usuarioActual = JSON.parse(usuarioGuardado);
@@ -274,10 +297,6 @@
             const rolUpper = (usuarioActual.rol || "").toUpperCase();
             if (rolUpper !== 'ADMIN' && rolUpper !== 'ADMINISTRADOR') {
                 document.querySelectorAll(".nav-admin-only").forEach(el => el.style.display = 'none');
-            }
-
-            if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
-                document.getElementById("versionSidebarLabel").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA}`;
             }
 
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -364,7 +383,7 @@
         function abrirModalQrCatalogo() {
             if (window.innerWidth < 768) { toggleSidebar(); }
             document.getElementById("modalSkuLabel").textContent = "CATÁLOGO WEB";
-            document.getElementById("modalSkuBarcodeLabel").textContent = "MANU JOYEROS";
+            document.getElementById("modalSkuBarcodeLabel").textContent = empNombre;
             document.getElementById("modalDescLabel").textContent = "Escanee para ver el catálogo digital";
 
             let catalogoUrl = "https://glasas.github.io/MANU_JOYEROS/catalogomanu";
@@ -381,7 +400,9 @@
                     fontSize: 11,
                     margin: 2
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.error("Error generando código de barras:", e);
+            }
 
             document.getElementById("modalQrBarra").classList.add("active");
         }
