@@ -10,8 +10,8 @@
         .cert-card { background: #ffffff; width: 100%; max-width: 480px; padding: 30px 30px 42px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px solid #e2e8f0; text-align: center; position: relative; }
         .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         
-        /* Contenedor del Logotipo Oficial en la Raíz */
-        .cert-logo-container { width: 100%; max-width: 170px; margin: 0 auto; background: #fff; padding: 4px; border-radius: 6px; }
+        /* Contenedor del Logotipo Oficial */
+        .cert-logo-container { width: 100%; max-width: 160px; margin: 0 auto; }
         .cert-logo-img { width: 100%; height: auto; display: block; object-fit: contain; }
 
         .cert-subtitle { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: #d97706; font-weight: 600; }
@@ -55,16 +55,34 @@
             <p style="color: #64748b; padding: 40px 0;">Consultando información del producto...</p>
         </div>
 
-        <div class="cert-version-label" id="lblCertVersion">Versión V3.1 • MANU JOYEROS</div>
+        <div class="cert-version-label" id="lblCertVersion">Versión Cargando... • MANU JOYEROS</div>
     </div>
 
+    <!-- Carga estricta y ordenada de configuración -->
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            if (typeof CONFIG !== 'undefined' && CONFIG.VERSION) {
-                document.getElementById("lblCertVersion").textContent = `Versión ${CONFIG.VERSION} • ${CONFIG.NOMBRE_EMPRESA || 'MANU JOYEROS'}`;
+            // Sincronización automática y robusta de la versión y datos corporativos desde CONFIG
+            let empresaNombre = "MANU JOYEROS";
+            let empresaNit = "900.000.000-1";
+            let empresaTel = "+57 (300) 8123125";
+            let empresaDir = "Ak 7 #115-60 Local 217";
+            let empresaEdificio = "Hacienda Santa Barbara";
+            let empresaCiudad = "Bogotá D.C., Colombia";
+            let versionSistema = "V1.1100";
+
+            if (typeof CONFIG !== 'undefined') {
+                if (CONFIG.VERSION) versionSistema = CONFIG.VERSION;
+                if (CONFIG.NOMBRE_EMPRESA) empresaNombre = CONFIG.NOMBRE_EMPRESA;
+                if (CONFIG.NIT) empresaNit = CONFIG.NIT;
+                if (CONFIG.TELEFONO) empresaTel = CONFIG.TELEFONO;
+                if (CONFIG.DIRECCION) empresaDir = CONFIG.DIRECCION;
+                if (CONFIG.EDIFICIO_O_LOCAL) empresaEdificio = CONFIG.EDIFICIO_O_LOCAL;
+                if (CONFIG.CIUDAD) empresaCiudad = CONFIG.CIUDAD;
             }
+
+            document.getElementById("lblCertVersion").textContent = `Versión ${versionSistema} • ${empresaNombre}`;
 
             const params = new URLSearchParams(window.location.search);
             let skuBuscado = "";
@@ -99,8 +117,7 @@
                 }
 
                 if (!resProd || resProd.status !== "success" || !resProd.data) {
-                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se pudo conectar con la base de datos.</p>`;
-                    return;
+                    throw new Error("No se pudo conectar con la base de datos.");
                 }
 
                 const producto = resProd.data.find(p => String(p.SKU || p.sku || "").trim().toUpperCase() === String(skuBuscado).trim().toUpperCase());
@@ -135,6 +152,7 @@
                 let materialProd = producto.Material_Oro || producto.Material || producto.material || producto.ID_Proveedor || "ORO DE 18K";
                 let colorProd = producto.Color || producto.ID_Subcategoria || "";
 
+                // Inyección dinámica oficial con los datos unificados
                 document.getElementById("contentArea").innerHTML = `
                     <div class="product-img-container">
                         ${fotoHtml}
@@ -153,11 +171,11 @@
                     </div>
 
                     <div class="company-info">
-                        <strong>MANU JOYEROS</strong><br>
-                        NIT: 900.000.000-1 • Tel: +57 (300) 8123125<br>
-                        Dirección Principal: Ak 7 #115-60 Local 217<br>
-                        Hacienda Santa Barbara<br>
-                        Bogotá D.C., Colombia<br>
+                        <strong>${empresaNombre}</strong><br>
+                        NIT: ${empresaNit} • Tel: ${empresaTel}<br>
+                        Dirección Principal: ${empresaDir}<br>
+                        ${empresaEdificio}<br>
+                        ${empresaCiudad}<br>
                         <em>Certificamos la autenticidad y calidad de esta pieza de alta joyería.</em>
                     </div>
 
