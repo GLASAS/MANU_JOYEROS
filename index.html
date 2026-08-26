@@ -464,9 +464,9 @@
                         <button class="btn-nuevo-producto" onclick="renderizarModuloKardex(document.getElementById('contentBody'))">🔄 Actualizar Kardex</button>
                     </div>
                     <div class="catalog-toolbar" style="margin-bottom: 1rem;">
-                        <input type="text" id="filtroKardexTexto" placeholder="🔍 Buscar por SKU, Producto, Código de Barras, Motivo..." style="max-width: 400px;" oninput="filtrarTablaKardex()">
+                        <input type="text" id="filtroKardexTexto" placeholder="🔍 Buscar por SKU, Código de Barras, Nombre, Motivo, Estado..." style="max-width: 450px;" oninput="filtrarTablaKardex()">
                     </div>
-                    <div id="tablaKardexContenedor">Cargando Kardex...</div>
+                    <div id="tablaKardexContenedor">Cargando Kardex y cruzando estados con inventario...</div>
                 </div>`;
 
             try {
@@ -483,6 +483,8 @@
                     resSalidas.data.forEach(s => movimientos.push({ ...s, Tipo: 'SALIDA' }));
                 }
 
+                movimientos.sort((a, b) => new Date(b.Fecha || b.fecha || 0) - new Date(a.Fecha || a.fecha || 0));
+
                 window.listaKardexCache = movimientos;
                 construirTablaKardex(movimientos);
             } catch (e) {
@@ -498,23 +500,32 @@
             }
 
             let html = `<div class="table-container"><table class="data-table"><thead><tr>
-                <th>Tipo</th><th>Fecha</th><th>SKU</th><th>Cantidad</th><th>Motivo</th><th>Usuario</th><th>Observaciones</th>
+                <th>Tipo</th><th>Fecha</th><th>SKU / Código de Barras</th><th>Producto / Joya</th><th>Estado Actual</th><th>Cantidad</th><th>Motivo</th><th>Usuario</th>
             </tr></thead><tbody>`;
 
             movimientos.forEach(m => {
                 let tipo = m.Tipo || 'MOVIMIENTO';
                 let badgeColor = tipo === 'ENTRADA' ? '#059669' : '#dc2626';
                 let skuVal = m.SKU || m.sku || '-';
+                let codigoBarraVal = m.Codigo_Barra || m.codigo_barra || '-';
+                let nombreProd = m.Nombre_Producto || m.nombre_producto || 'Joyas / Artículo';
+                let estadoActual = m.Estado_Actual || m.estado_actual || 'DISPONIBLE';
                 let motivoVal = m.Motivo || m.motivo || '-';
+
+                let estadoBadgeColor = estadoActual.toUpperCase() === 'VENDIDO' ? '#dc2626' : '#10b981';
 
                 html += `<tr>
                     <td><span class="badge" style="background-color: ${badgeColor};">${tipo}</span></td>
                     <td>${m.Fecha || m.fecha || '-'}</td>
-                    <td><strong style="color: #d97706;">${skuVal}</strong></td>
+                    <td>
+                        <strong style="color: #d97706;">${skuVal}</strong><br>
+                        <span style="font-size: 0.75rem; font-family: monospace; color: #64748b;">BARRA: ${codigoBarraVal}</span>
+                    </td>
+                    <td>${nombreProd}</td>
+                    <td><span class="badge" style="background-color: ${estadoBadgeColor};">${estadoActual}</span></td>
                     <td>${m.Cantidad || m.cantidad || 1}</td>
                     <td>${motivoVal}</td>
                     <td>${m.Usuario || m.usuario || '-'}</td>
-                    <td>${m.Observaciones || m.observaciones || '-'}</td>
                 </tr>`;
             });
             html += `</tbody></table></div>`;
@@ -527,11 +538,13 @@
 
             const filtrados = window.listaKardexCache.filter(m => {
                 let sku = String(m.SKU || m.sku || "").toLowerCase();
+                let codigoBarra = String(m.Codigo_Barra || m.codigo_barra || "").toLowerCase();
+                let nombre = String(m.Nombre_Producto || m.nombre_producto || "").toLowerCase();
                 let motivo = String(m.Motivo || m.motivo || "").toLowerCase();
                 let usuario = String(m.Usuario || m.usuario || "").toLowerCase();
-                let obs = String(m.Observaciones || m.observaciones || "").toLowerCase();
+                let estado = String(m.Estado_Actual || m.estado_actual || "").toLowerCase();
 
-                return !query || sku.includes(query) || motivo.includes(query) || usuario.includes(query) || obs.includes(query);
+                return !query || sku.includes(query) || codigoBarra.includes(query) || nombre.includes(query) || motivo.includes(query) || usuario.includes(query) || estado.includes(query);
             });
             construirTablaKardex(filtrados);
         }
@@ -729,9 +742,6 @@
             }
         }
 
-        // ==========================================
-        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA
-        // ==========================================
         async function renderizarModuloInventario(container) {
             await cargarCategoriasDinamicas();
             await cargarValorOroDia();
@@ -975,7 +985,6 @@
             link.click();
             document.body.removeChild(link);
         }
-        // ==========================================
 
         async function abrirFormularioMovimiento(tipoMov) {
             if (!listaProductosCache || listaProductosCache.length === 0) {
@@ -983,7 +992,6 @@
                 if (res && res.status === "success") listaProductosCache = res.data || [];
             }
 
-            // Filtrar solo productos disponibles para salidas
             let productosDisponibles = listaProductosCache.filter(p => {
                 let estadoProd = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
                 return tipoMov === 'ENTRADAS' || estadoProd.includes("DISPONIBLE");
@@ -1483,7 +1491,6 @@
                 }
             }
 
-            // Filtrar únicamente los productos cuyo estado sea DISPONIBLE en la columna M
             listaProductosCache = (productos || []).filter(p => {
                 let estadoProd = String(p.Estado || p.estado || "DISPONIBLE").trim().toUpperCase();
                 return estadoProd.includes("DISPONIBLE");
