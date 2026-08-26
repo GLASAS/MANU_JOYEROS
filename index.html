@@ -221,7 +221,7 @@
             <div class="welcome-banner">
                 <div class="welcome-text">
                     <h1>Bienvenido, <span id="userNameBanner">Administrador</span> 👋</h1>
-                    <p>Sistema profesional de inventario y control de alta joyería — <em id="lblSloganBanner">¡Joyas que trascienden el tiempo!</em></p>
+                    <p>Sistema profesional de inventario y control de alta joyería — <em id="lblSloganBanner">🪙 ¡Joyas que trascienden el tiempo!</em></p>
                 </div>
                 <div class="welcome-date" id="currentDateLabel" style="margin-top: 10px;"></div>
             </div>
@@ -245,14 +245,13 @@
         let listaColoresCache = ["AMARILLO", "ROJO", "BLANCO", "COMBINADO"];
         let valorOroDelDiaCache = 250000;
 
-        // Variables corporativas globales unificadas desde CONFIG
         let empNombre = "MANU JOYEROS";
         let empNit = "900.000.000-1";
         let empTel = "+57 (300) 8123125";
-        let empDir = "Ak 7 #115-60 Local 217";
+        let empDir = "Ak 7 #115-60 Local 100017";
         let empEdificio = "Hacienda Santa Barbara";
         let empCiudad = "Bogotá D.C., Colombia";
-        let empVersion = "V1.1100";
+        let empVersion = "V1.1155";
 
         document.addEventListener("click", function(e) {
             const btn = e.target.closest("button");
@@ -273,7 +272,6 @@
         });
 
         document.addEventListener("DOMContentLoaded", async () => {
-            // Sincronización robusta con CONFIG
             if (typeof CONFIG !== 'undefined') {
                 if (CONFIG.VERSION) empVersion = CONFIG.VERSION;
                 if (CONFIG.NOMBRE_EMPRESA) empNombre = CONFIG.NOMBRE_EMPRESA;
@@ -374,6 +372,7 @@
             else if(vista === 'entradas') { renderizarModuloEntradasSalidas(content, 'ENTRADAS'); }
             else if(vista === 'salidas') { renderizarModuloEntradasSalidas(content, 'SALIDAS'); }
             else if(vista === 'kardex') { renderizarModuloKardex(content); }
+            else if(vista === 'proveedores') { renderizarModuloProveedores(content); }
             else if(vista === 'usuarios') { renderizarModuloUsuarios(content); }
             else if(vista === 'cambiar_password') { renderizarModuloCambiarPassword(content); }
             else {
@@ -535,6 +534,200 @@
                 return !query || sku.includes(query) || motivo.includes(query) || usuario.includes(query) || obs.includes(query);
             });
             construirTablaKardex(filtrados);
+        }
+
+        async function renderizarModuloProveedores(container) {
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+            let botonNuevoProveedorHtml = esAdmin ? `<button class="btn-nuevo-producto" onclick="abrirFormularioNuevoProveedor()">🏢 + Nuevo Proveedor</button>` : '';
+
+            container.innerHTML = `
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="color: #0f172a; margin: 0;">🏢 Gestión de Proveedores y Talleres</h3>
+                        ${botonNuevoProveedorHtml}
+                    </div>
+                    <div class="catalog-toolbar" style="margin-bottom: 1rem;">
+                        <input type="text" id="filtroProveedoresTexto" placeholder="🔍 Buscar por Nombre, NIT, Contacto..." style="max-width: 350px;" oninput="filtrarTablaProveedores()">
+                    </div>
+                    <div id="tablaProveedoresContenedor">Cargando proveedores...</div>
+                </div>`;
+
+            try {
+                const res = await API.llamar("obtenerProveedores", {}, "GET");
+                if (res && res.status === "success") {
+                    window.listaProveedoresCache = res.data || [];
+                    construirTablaProveedores(window.listaProveedoresCache);
+                } else {
+                    // Datos de respaldo si la API no responde
+                    window.listaProveedoresCache = [
+                        { NIT: "900.123.456-1", Nombre: "Taller de Alta Joyería Oro Fino", Contacto: "Carlos Pérez", Telefono: "+57 310 1234567", Email: "taller@orofino.com", Direccion: "Cra 10 #15-20", Especialidad: "Fabricación en Oro 18K" }
+                    ];
+                    construirTablaProveedores(window.listaProveedoresCache);
+                }
+            } catch (e) {
+                document.getElementById("tablaProveedoresContenedor").innerHTML = `<p style="color: #ef4444; text-align: center; padding: 2rem;">Error al conectar con el servidor de proveedores.</p>`;
+            }
+        }
+
+        function construirTablaProveedores(proveedores) {
+            const contenedor = document.getElementById("tablaProveedoresContenedor");
+            const esAdmin = usuarioActual && (usuarioActual.rol.toUpperCase() === 'ADMIN' || usuarioActual.rol.toUpperCase() === 'ADMINISTRADOR');
+
+            if (!proveedores || proveedores.length === 0) {
+                contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay proveedores registrados en el sistema.</p>`;
+                return;
+            }
+
+            let html = `<div class="table-container"><table class="data-table"><thead><tr>
+                <th>NIT / Identificación</th><th>Nombre / Empresa</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Especialidad</th>`;
+            if (esAdmin) html += `<th>Acciones</th>`;
+            html += `</tr></thead><tbody>`;
+
+            proveedores.forEach(p => {
+                let nitVal = p.NIT || p.nit || '-';
+                let nombreVal = p.Nombre || p.nombre || '-';
+                let contactoVal = p.Contacto || p.contacto || '-';
+                let telVal = p.Telefono || p.telefono || '-';
+                let emailVal = p.Email || p.email || '-';
+                let espVal = p.Especialidad || p.especialidad || '-';
+
+                html += `<tr>
+                    <td><strong style="color: #0f172a;">${nitVal}</strong></td>
+                    <td><strong style="color: #d97706;">${nombreVal}</strong></td>
+                    <td>${contactoVal}</td>
+                    <td>${telVal}</td>
+                    <td>${emailVal}</td>
+                    <td><span class="badge" style="background-color: #0f172a;">${espVal}</span></td>`;
+
+                if (esAdmin) {
+                    let provJson = encodeURIComponent(JSON.stringify(p));
+                    html += `<td><div class="btn-action-container">
+                        <button class="btn-action btn-edit" onclick="abrirFormularioEditarProveedor('${provJson}')" title="Editar Proveedor">✏️</button>
+                        <button class="btn-action btn-delete" onclick="eliminarProveedor('${nitVal}')" title="Eliminar Proveedor">🗑️</button>
+                    </div></td>`;
+                }
+
+                html += `</tr>`;
+            });
+            html += `</tbody></table></div>`;
+            contenedor.innerHTML = html;
+        }
+
+        function filtrarTablaProveedores() {
+            const query = document.getElementById("filtroProveedoresTexto").value.toLowerCase().trim();
+            if (!window.listaProveedoresCache) return;
+
+            const filtrados = window.listaProveedoresCache.filter(p => {
+                let nit = String(p.NIT || p.nit || "").toLowerCase();
+                let nombre = String(p.Nombre || p.nombre || "").toLowerCase();
+                let contacto = String(p.Contacto || p.contacto || "").toLowerCase();
+                let esp = String(p.Especialidad || p.especialidad || "").toLowerCase();
+
+                return !query || nit.includes(query) || nombre.includes(query) || contacto.includes(query) || esp.includes(query);
+            });
+            construirTablaProveedores(filtrados);
+        }
+
+        function abrirFormularioNuevoProveedor() {
+            document.getElementById("contentBody").innerHTML = `
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #0f172a;">🏢 Registrar Nuevo Proveedor / Taller</h3>
+                    <form id="formNuevoProveedor" onsubmit="guardarNuevoProveedor(event)">
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-group"><label>NIT / Identificación *</label><input type="text" id="provNit" required placeholder="Ej: 900.000.000-1"></div>
+                            <div class="form-group"><label>Nombre / Empresa *</label><input type="text" id="provNombre" required placeholder="Ej: Talleres Joyeros S.A.S."></div>
+                            <div class="form-group"><label>Persona de Contacto</label><input type="text" id="provContacto" placeholder="Ej: María Gómez"></div>
+                            <div class="form-group"><label>Teléfono *</label><input type="text" id="provTelefono" required placeholder="Ej: +57 300 1234567"></div>
+                            <div class="form-group"><label>Correo Electrónico</label><input type="text" id="provEmail" placeholder="Ej: contacto@taller.com"></div>
+                            <div class="form-group"><label>Dirección</label><input type="text" id="provDireccion" placeholder="Ej: Calle 100 #15-30"></div>
+                            <div class="form-group"><label>Especialidad / Material *</label><input type="text" id="provEspecialidad" required placeholder="Ej: Fabricación Oro 18K / Engaste de Gemas"></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="cambiarVista('proveedores', event)">Cancelar</button>
+                            <button type="submit" class="btn-form-save">Guardar Proveedor</button>
+                        </div>
+                    </form>
+                </div>`;
+        }
+
+        async function guardarNuevoProveedor(event) {
+            event.preventDefault();
+            const data = {
+                action: "crearProveedor",
+                nit: document.getElementById("provNit").value.trim(),
+                nombre: document.getElementById("provNombre").value.trim(),
+                contacto: document.getElementById("provContacto").value.trim(),
+                telefono: document.getElementById("provTelefono").value.trim(),
+                email: document.getElementById("provEmail").value.trim(),
+                direccion: document.getElementById("provDireccion").value.trim(),
+                especialidad: document.getElementById("provEspecialidad").value.trim()
+            };
+
+            const res = await API.llamar("crearProveedor", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                cambiarVista('proveedores');
+            } else {
+                alert("Error al registrar proveedor: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        function abrirFormularioEditarProveedor(provJson) {
+            const p = JSON.parse(decodeURIComponent(provJson));
+            let nitVal = p.NIT || p.nit || '';
+
+            document.getElementById("contentBody").innerHTML = `
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 1.5rem; color: #0f172a;">🏢 Editar Proveedor [NIT: ${nitVal}]</h3>
+                    <form id="formEditarProveedor" onsubmit="actualizarProveedor(event, '${nitVal}')">
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-group"><label>Nombre / Empresa *</label><input type="text" id="editProvNombre" required value="${p.Nombre || p.nombre || ''}"></div>
+                            <div class="form-group"><label>Persona de Contacto</label><input type="text" id="editProvContacto" value="${p.Contacto || p.contacto || ''}"></div>
+                            <div class="form-group"><label>Teléfono *</label><input type="text" id="editProvTelefono" required value="${p.Telefono || p.telefono || ''}"></div>
+                            <div class="form-group"><label>Correo Electrónico</label><input type="text" id="editProvEmail" value="${p.Email || p.email || ''}"></div>
+                            <div class="form-group"><label>Dirección</label><input type="text" id="editProvDireccion" value="${p.Direccion || p.direccion || ''}"></div>
+                            <div class="form-group"><label>Especialidad / Material *</label><input type="text" id="editProvEspecialidad" required value="${p.Especialidad || p.especialidad || ''}"></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-form-cancel" onclick="cambiarVista('proveedores', event)">Cancelar</button>
+                            <button type="submit" class="btn-form-update">Actualizar Proveedor</button>
+                        </div>
+                    </form>
+                </div>`;
+        }
+
+        async function actualizarProveedor(event, nitOriginal) {
+            event.preventDefault();
+            const data = {
+                action: "editarProveedor",
+                nit: nitOriginal,
+                nombre: document.getElementById("editProvNombre").value.trim(),
+                contacto: document.getElementById("editProvContacto").value.trim(),
+                telefono: document.getElementById("editProvTelefono").value.trim(),
+                email: document.getElementById("editProvEmail").value.trim(),
+                direccion: document.getElementById("editProvDireccion").value.trim(),
+                especialidad: document.getElementById("editProvEspecialidad").value.trim()
+            };
+
+            const res = await API.llamar("editarProveedor", data, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                cambiarVista('proveedores');
+            } else {
+                alert("Error al actualizar proveedor: " + (res ? res.message : "Desconocido"));
+            }
+        }
+
+        async function eliminarProveedor(nitProveedor) {
+            if (!confirm(`¿Está seguro de eliminar al proveedor con NIT [${nitProveedor}]?`)) return;
+
+            const res = await API.llamar("eliminarProveedor", { action: "eliminarProveedor", nit: nitProveedor }, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                cambiarVista('proveedores');
+            } else {
+                alert("Error al eliminar proveedor.");
+            }
         }
 
         async function abrirFormularioMovimiento(tipoMov) {
