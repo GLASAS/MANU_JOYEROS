@@ -415,7 +415,7 @@
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
                         <h3 style="color: #0f172a; margin: 0;">${titulo}</h3>
-                        <button class="btn-nuevo-producto" style="background: ${btnColor};" onclick="abrirFormularioMovimiento('${tipoMovimiento}')">+ Registrar ${tipoMovimiento === 'ENTRADAS' ? 'Entrada' : 'Salida'}</button>
+                        ${tipoMovimiento === 'ENTRADAS' ? `<button class="btn-nuevo-producto" style="background: ${btnColor};" onclick="abrirFormularioMovimiento('${tipoMovimiento}')">+ Registrar Entrada</button>` : ''}
                     </div>
                     <div id="tablaMovimientosContenedor">Cargando registros...</div>
                 </div>`;
@@ -425,8 +425,10 @@
 
             if (res && res.status === "success" && res.data && res.data.length > 0) {
                 let html = `<div class="table-container"><table class="data-table"><thead><tr>
-                    <th>ID Movimiento</th><th>Fecha</th><th>SKU / Referencia</th><th>Cantidad</th><th>Motivo</th><th>Usuario</th><th>Observaciones</th>
-                </tr></thead><tbody>`;
+                    <th>ID Movimiento</th><th>Fecha</th><th>SKU / Referencia</th><th>Cantidad</th><th>Motivo</th><th>Usuario</th><th>Observaciones</th>`;
+                
+                if (tipoMovimiento === 'SALIDAS') html += `<th>Acciones</th>`;
+                html += `</tr></thead><tbody>`;
 
                 res.data.forEach(m => {
                     let idMovVal = m.ID_Movimiento || m.id_movimiento || m.ID_Salida || m.id_salida || '-';
@@ -446,13 +448,31 @@
                         <td>${m.Cantidad || m.cantidad || 1}</td>
                         <td><span class="badge" style="background-color: #0f172a;">${motivoVal}</span></td>
                         <td>${m.Usuario || m.usuario || '-'}</td>
-                        <td>${m.Observaciones || m.observaciones || '-'}</td>
-                    </tr>`;
+                        <td>${m.Observaciones || m.observaciones || '-'}</td>`;
+
+                    if (tipoMovimiento === 'SALIDAS') {
+                        html += `<td><button class="btn-action btn-delete" onclick="reversarSalidaUnica('${idMovVal}')" title="Reversar / Anular Salida">↩️</button></td>`;
+                    }
+
+                    html += `</tr>`;
                 });
                 html += `</tbody></table></div>`;
                 contenedor.innerHTML = html;
             } else {
                 contenedor.innerHTML = `<p style="color: #64748b; text-align: center; padding: 2rem;">No hay registros de ${tipoMovimiento.toLowerCase()} en el sistema.</p>`;
+            }
+        }
+
+        async function reversarSalidaUnica(idSalida) {
+            if (!confirm(`¿Está seguro de reversar/anular la salida [${idSalida}]? El producto volverá automáticamente a estado DISPONIBLE.`)) return;
+
+            const res = await API.llamar("reversarSalida", { action: "reversarSalida", id_salida: idSalida, usuario: usuarioActual.usuario }, "POST");
+            if (res && res.status === "success") {
+                alert(res.message);
+                localStorage.removeItem("cache_productos_manu");
+                renderizarModuloEntradasSalidas(document.getElementById('contentBody'), 'SALIDAS');
+            } else {
+                alert("Error al reversar la salida: " + (res ? res.message : "Desconocido"));
             }
         }
 
