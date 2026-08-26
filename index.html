@@ -730,7 +730,7 @@
         }
 
         // ==========================================
-        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA (SIN VALOR DE VENTA)
+        // MÓDULO DE INVENTARIO FÍSICO / ARQUEO EN LÍNEA (SIN VALOR DE VENTA, COLUMNA PUNTEAR AL FINAL)
         // ==========================================
         async function renderizarModuloInventario(container) {
             await cargarCategoriasDinamicas();
@@ -805,7 +805,6 @@
                     <div id="tablaArqueoContenedor">Cargando inventario para arqueo...</div>
                 </div>`;
 
-            // Cargar productos y filtrar únicamente los disponibles
             let productosCrudos = [];
             const res = await API.llamar("obtenerProductos", {}, "GET");
             if (res && res.status === "success") {
@@ -833,14 +832,13 @@
 
             window.listaArqueoFiltradaCache = window.listaDisponiblesArqueo;
 
-            // Inicializar estados en blanco ("" / PENDIENTE) para que el usuario puntee manualmente
             if (!window.arqueoEstados) {
                 window.arqueoEstados = {};
             }
             window.listaDisponiblesArqueo.forEach(p => {
                 let sku = p.SKU || p.sku;
                 if (sku && window.arqueoEstados[sku] === undefined) {
-                    window.arqueoEstados[sku] = ""; // EN BLANCO por defecto
+                    window.arqueoEstados[sku] = "";
                 }
             });
 
@@ -875,9 +873,9 @@
                 return;
             }
 
-            // TABLA SIN COLUMNA DE VALOR DE VENTA
+            // TABLA CON LA COLUMNA PUNTEAR / ESTADO AL FINAL (DESPUÉS DE PESO)
             let html = `<div class="table-container"><table class="data-table"><thead><tr>
-                <th>Puntear / Estado</th><th>SKU</th><th>Descripción / Nombre</th><th>Ubicación</th><th>Peso</th>
+                <th>SKU</th><th>Descripción / Nombre</th><th>Ubicación</th><th>Peso</th><th>Puntear / Estado</th>
             </tr></thead><tbody>`;
 
             productos.forEach(p => {
@@ -907,11 +905,11 @@
                 `;
 
                 html += `<tr>
-                    <td>${selectorHtml}</td>
                     <td><strong style="color: #d97706;">${sku}</strong></td>
                     <td>${nombre}</td>
                     <td>${ubicacion}</td>
                     <td>${peso > 0 ? peso + 'g' : '-'}</td>
+                    <td>${selectorHtml}</td>
                 </tr>`;
             });
 
