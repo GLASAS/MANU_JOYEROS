@@ -149,7 +149,7 @@
         .btn-whatsapp-link { background: #25d366; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: background 0.2s; box-shadow: 0 2px 5px rgba(37, 211, 102, 0.2); }
         .btn-whatsapp-link:hover { background: #20ba5a; }
 
-        .catalog-footer { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; margin-top: 40px; }
+        .catalog-footer { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; margin-top: 40px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -177,8 +177,12 @@
     </div>
 
     <footer class="catalog-footer">
-        <strong id="lblFooterEmpresa">MANU JOYEROS</strong> • NIT: <span id="lblFooterNit">900.000.000-1</span> • <span id="lblFooterCiudad">Bogotá D.C., Colombia</span><br>
-        <em>Joyas que trascienden el tiempo</em><br>
+        <strong id="lblFooterEmpresa" style="font-size: 0.95rem; color: #0f172a;">MANU JOYEROS</strong><br>
+        NIT: <span id="lblFooterNit">900.000.000-1</span> • Tel: <span id="lblFooterTel">+57 (300) 8123125</span><br>
+        Dirección Principal: <span id="lblFooterDir">Ak 7 #115-60 Local 217</span><br>
+        <span id="lblFooterEdificio">Hacienda Santa Barbara</span><br>
+        <span id="lblFooterCiudad">Bogotá D.C., Colombia</span><br>
+        <em style="margin-top: 4px; display: inline-block;">Joyas que trascienden el tiempo</em><br>
         <span style="font-size: 0.75rem; color: #cbd5e1; margin-top: 6px; display: inline-block;" id="lblCatalogVersion">Versión Cargando... • MANU JOYEROS</span>
     </footer>
 
@@ -189,9 +193,12 @@
         let valorOroDiaGlobal = 250000;
 
         document.addEventListener("DOMContentLoaded", async () => {
-            // Sincronización automática de versión y datos corporativos desde CONFIG
+            // Sincronización automática completa de versión y datos corporativos desde CONFIG
             let empresaNombre = "MANU JOYEROS";
             let empresaNit = "900.000.000-1";
+            let empresaTel = "+57 (300) 8123125";
+            let empresaDir = "Ak 7 #115-60 Local 217";
+            let empresaEdificio = "Hacienda Santa Barbara";
             let empresaCiudad = "Bogotá D.C., Colombia";
             let versionSistema = "V1.1100";
 
@@ -199,11 +206,17 @@
                 if (CONFIG.VERSION) versionSistema = CONFIG.VERSION;
                 if (CONFIG.NOMBRE_EMPRESA) empresaNombre = CONFIG.NOMBRE_EMPRESA;
                 if (CONFIG.NIT) empresaNit = CONFIG.NIT;
+                if (CONFIG.TELEFONO) empresaTel = CONFIG.TELEFONO;
+                if (CONFIG.DIRECCION) empresaDir = CONFIG.DIRECCION;
+                if (CONFIG.EDIFICIO_O_LOCAL) empresaEdificio = CONFIG.EDIFICIO_O_LOCAL;
                 if (CONFIG.CIUDAD) empresaCiudad = CONFIG.CIUDAD;
             }
 
             document.getElementById("lblFooterEmpresa").textContent = empresaNombre;
             document.getElementById("lblFooterNit").textContent = empresaNit;
+            document.getElementById("lblFooterTel").textContent = empresaTel;
+            document.getElementById("lblFooterDir").textContent = empresaDir;
+            document.getElementById("lblFooterEdificio").textContent = empresaEdificio;
             document.getElementById("lblFooterCiudad").textContent = empresaCiudad;
             document.getElementById("lblCatalogVersion").textContent = `Versión ${versionSistema} • ${empresaNombre}`;
 
