@@ -8,8 +8,12 @@
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .cert-card { background: #ffffff; width: 100%; max-width: 480px; padding: 30px 30px 42px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 2px solid #e2e8f0; text-align: center; position: relative; }
-        .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
-        .cert-logo { font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; color: #0f172a; margin-bottom: 4px; }
+        .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        
+        /* Contenedor del Logotipo Oficial */
+        .cert-logo-container { width: 100%; max-width: 160px; margin: 0 auto; }
+        .cert-logo-img { width: 100%; height: auto; display: block; object-fit: contain; }
+
         .cert-subtitle { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: #d97706; font-weight: 600; }
         
         .product-img-container { width: 180px; height: 180px; margin: 0 auto 20px auto; border-radius: 12px; border: 2px solid #cbd5e1; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8fafc; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -41,7 +45,9 @@
 
     <div class="cert-card" id="certContainer">
         <div class="cert-header">
-            <div class="cert-logo">MANU JOYEROS</div>
+            <div class="cert-logo-container">
+                <img src="manu_joyeros.jpg" alt="MANU JOYEROS" class="cert-logo-img">
+            </div>
             <div class="cert-subtitle">Certificado de Autenticidad y Garantía</div>
         </div>
 
