@@ -11,7 +11,7 @@
         .cert-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         
         /* Contenedor del Logotipo Oficial */
-        .cert-logo-container { width: 100%; max-width: 160px; margin: 0 auto; }
+        .cert-logo-container { width: 100%; max-width: 170px; margin: 0 auto; background: #fff; padding: 4px; border-radius: 6px; }
         .cert-logo-img { width: 100%; height: auto; display: block; object-fit: contain; }
 
         .cert-subtitle { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.5px; color: #d97706; font-weight: 600; }
@@ -99,7 +99,8 @@
                 }
 
                 if (!resProd || resProd.status !== "success" || !resProd.data) {
-                    throw new Error("No se pudo conectar con la base de datos.");
+                    document.getElementById("contentArea").innerHTML = `<p style="color: #ef4444; font-weight: bold;">⚠️ No se pudo conectar con la base de datos o la respuesta fue vacía.</p>`;
+                    return;
                 }
 
                 const producto = resProd.data.find(p => String(p.SKU || p.sku || "").trim().toUpperCase() === String(skuBuscado).trim().toUpperCase());
